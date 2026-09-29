@@ -13,7 +13,7 @@ async function createFarm(userId: string) {
   const [row] = await asUser<{ id: string }>(
     db,
     userId,
-    "select public.create_farm('주말농장', 37.5, 127.0, 10, 5) as id",
+    "select public.create_farm('주말농장', 37.5, 127.0) as id",
   );
   return row.id;
 }
@@ -51,6 +51,16 @@ describe("farms RLS", () => {
     expect(await asUser(db, C, "select * from farm_invites")).toEqual([]);
   });
 
+  it("farm is created without size, member sets size later", async () => {
+    await asUser(db, A, "update farms set width_m = 10, height_m = 5 where id = $1", [farmId]);
+    const [farm] = await asUser<{ width_m: string; height_m: string }>(
+      db,
+      A,
+      "select width_m, height_m from farms",
+    );
+    expect([Number(farm.width_m), Number(farm.height_m)]).toEqual([10, 5]);
+  });
+
   it("non-member cannot update farm", async () => {
     await asUser(db, C, "update farms set name = 'hacked'");
     const [farm] = await asUser<{ name: string }>(db, A, "select name from farms");
@@ -64,7 +74,7 @@ describe("farms RLS", () => {
   });
 
   it("anon cannot call RPCs", async () => {
-    await expect(asUser(db, null, "select public.create_farm('x', 0, 0, 1, 1)")).rejects.toThrow(
+    await expect(asUser(db, null, "select public.create_farm('x', 0, 0)")).rejects.toThrow(
       /permission denied/,
     );
   });

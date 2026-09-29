@@ -1,19 +1,16 @@
 import { requireOnboardingStep } from "@/lib/onboarding";
 import { Screen } from "@/components/ui";
-import { NextStep } from "./NextStep";
+import { SizeForm } from "./SizeForm";
 
-// 가상 밭 격자 편집은 P3에서 구현. 지금은 농장 크기만 확인하고 넘어간다.
+// 가상 밭 격자 편집은 P3에서 구현. 지금은 밭 크기만 받는다.
 export default async function OnboardingFieldPage() {
   const farm = await requireOnboardingStep("field");
   return (
-    <Screen title="가상 밭">
-      <div className="rounded-lg border border-dashed border-primary bg-white p-6 text-center text-sm">
-        <p className="font-semibold">
-          {farm.name} · {Number(farm.width_m)}m × {Number(farm.height_m)}m
-        </p>
-        <p className="mt-2 text-neutral-500">격자 밭 편집은 다음 단계에서 준비됩니다.</p>
-      </div>
-      <NextStep farmId={farm.id} />
+    <Screen title="밭 크기">
+      <p className="text-sm text-neutral-600">
+        걸음으로 재도 괜찮아요. 한 걸음은 보통 0.6~0.7m예요.
+      </p>
+      <SizeForm farmId={farm.id} />
     </Screen>
   );
 }

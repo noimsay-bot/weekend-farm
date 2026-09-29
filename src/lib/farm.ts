@@ -7,8 +7,8 @@ export type Farm = {
   name: string;
   lat: number;
   lng: number;
-  width_m: number;
-  height_m: number;
+  width_m: number | null;
+  height_m: number | null;
   onboarding_step: OnboardingStep;
   onboarding_has_planted: boolean | null;
 };
