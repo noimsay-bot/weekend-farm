@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { CircleMarker, Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button, ErrorText } from "@/components/ui";
+import { geocode, type GeocodeResult } from "@/lib/geocode";
 
 export type LatLng = { lat: number; lng: number };
-
-type SearchResult = { place_id: number; display_name: string; lat: string; lon: string };
 
 const KOREA_CENTER: LatLng = { lat: 36.3, lng: 127.8 };
 
@@ -24,10 +23,11 @@ export function LocationPicker({
   const markerRef = useRef<CircleMarker | null>(null);
   const onChangeRef = useRef(onChange);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<GeocodeResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -100,20 +100,15 @@ export function LocationPicker({
     if (!query.trim()) return;
     setSearching(true);
     setError("");
+    setNotice("");
     try {
-      // OpenStreetMap Nominatim (무료, 초당 1회 이하 사용 조건)
-      const url = new URL("https://nominatim.openstreetmap.org/search");
-      url.search = new URLSearchParams({
-        q: query.trim(),
-        format: "jsonv2",
-        countrycodes: "kr",
-        limit: "5",
-        "accept-language": "ko",
-      }).toString();
-      const res = await fetch(url);
-      const data: SearchResult[] = await res.json();
-      setResults(data);
-      if (data.length === 0) setError("검색 결과가 없어요. 동·읍·면 이름으로 찾고 지도를 탭해 보세요.");
+      const { results, matchedName } = await geocode(query);
+      setResults(results);
+      if (results.length === 0) {
+        setError("검색 결과가 없어요. 동·읍·면·리 이름으로 찾고 지도를 탭해 보세요.");
+      } else if (matchedName) {
+        setNotice(`번지까지는 못 찾아서 '${matchedName}'로 찾았어요. 고른 뒤 지도에서 밭 자리를 탭하세요.`);
+      }
     } catch {
       setError("검색하지 못했어요. 지도를 직접 탭해 주세요.");
     } finally {
@@ -161,6 +156,7 @@ export function LocationPicker({
         </ul>
       )}
 
+      {notice && <p className="text-sm text-neutral-600">{notice}</p>}
       <ErrorText>{error}</ErrorText>
 
       <div
