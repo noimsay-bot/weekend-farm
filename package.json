@@ -17,7 +17,8 @@
     "leaflet": "^1.9.4",
     "next": "16.3.6",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -26,6 +27,7 @@
     "@types/node": "^24.19.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",

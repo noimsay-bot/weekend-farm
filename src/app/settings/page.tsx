@@ -21,9 +21,20 @@ export default async function SettingsPage() {
         </p>
         <LocationForm farmId={farm.id} initial={{ lat: farm.lat, lng: farm.lng }} />
       </section>
-      <Link href="/admin/crops" className="text-sm text-primary underline">
-        작물 데이터 관리 (관리자)
-      </Link>
+      <nav className="flex flex-col divide-y rounded-lg bg-white text-sm">
+        {[
+          ["/settings/farm", "농장 기준값 (밭 크기·칸·비 판정)"],
+          ["/settings/notifications", "알림 설정"],
+          ["/settings/routine", "밭 도착 시 자동 열기 (갤럭시 루틴)"],
+          ["/plan", "계획 목록·멤버 초대"],
+          ["/admin/crops", "작물 데이터 관리 (관리자)"],
+        ].map(([href, label]) => (
+          <Link key={href} href={href} className="flex items-center justify-between px-4 py-3">
+            <span>{label}</span>
+            <span className="text-neutral-400">›</span>
+          </Link>
+        ))}
+      </nav>
     </Screen>
   );
 }

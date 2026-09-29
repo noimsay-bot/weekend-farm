@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { BottomNav } from "@/components/BottomNav";
+import { GeoPrompt } from "@/components/GeoPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <BottomNav />
+        <GeoPrompt />
         <ServiceWorkerRegister />
       </body>
     </html>

@@ -21,7 +21,7 @@ export default async function NewLogPage({ searchParams }: PageProps<"/log/new">
   const cropIds = [...new Set((targets ?? []).map((t) => t.crop_id))];
   const { data: pests } = await supabase
     .from("crop_pest_controls")
-    .select("id, crop_id, pest_name, ingredient_name, moa_code, is_organic")
+    .select("id, crop_id, pest_name, ingredient_name, moa_code, is_organic, safe_days_before_harvest")
     .in("crop_id", cropIds.length ? cropIds : ["00000000-0000-0000-0000-000000000000"])
     .order("ingredient_name");
 

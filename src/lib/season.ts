@@ -14,6 +14,11 @@ export function todayKst(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(now);
 }
 
+// KST 현재 시(0~23)
+export function hourKst(now: Date = new Date()): number {
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul", hour: "2-digit", hour12: false }).format(now)) % 24;
+}
+
 export type SeasonKey = { year: number; season: PlanSeason };
 
 export function seasonOf(dateKst: string): SeasonKey {

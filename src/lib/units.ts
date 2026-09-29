@@ -17,8 +17,10 @@ export function plantsForArea(m2: number, plantsPerPyeong: number | null): numbe
   return Math.round(m2ToPyeong(m2) * plantsPerPyeong);
 }
 
+// 소수점 아래 불필요한 0만 지운다 (정수의 0은 유지)
 function trim(n: number, digits: number): string {
-  return n.toFixed(digits).replace(/\.?0+$/, "");
+  const s = n.toFixed(digits);
+  return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
 }
 
 // "약 1.5평 (5㎡)"
