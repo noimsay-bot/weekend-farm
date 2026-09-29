@@ -5,6 +5,7 @@ import { seasonLabel, type PlanSeason } from "@/lib/season";
 import { Screen } from "@/components/ui";
 import { PlanEditor, type EditorData } from "./PlanEditor";
 import { inMonthDayRange } from "@/lib/dates";
+import { referenceLine, type SeasonSummary } from "@/lib/summary/build";
 
 const SEASON_ORDER: Record<string, number> = { spring: 0, autumn: 1, overwinter: 2 };
 
@@ -87,6 +88,15 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
     onboarding_has_planted: boolean | null;
     region: string | null;
   };
+  // 다음 해 같은 작기 계획 편집 시 작년 결산 참고
+  const { data: lastYear } = await supabase
+    .from("field_plans")
+    .select("id, season_summaries(summary)")
+    .eq("farm_id", plan.farm_id)
+    .eq("year", plan.year - 1)
+    .eq("season", plan.season)
+    .maybeSingle();
+  const reference = ((lastYear?.season_summaries ?? []) as { summary: SeasonSummary }[]).map((r) => referenceLine(r.summary));
   const picks = plan.season === "spring" && plan.status !== "confirmed" ? await heatPicks(supabase, plan.farm_id, plan.year, farm.region) : [];
 
   const data: EditorData = {
@@ -112,6 +122,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
     approvedIds: (approvals.data ?? []).map((a) => a.user_id),
     warnings: warnings.data ?? [],
     heatPicks: picks,
+    lastYearReference: reference,
     plantings: (plantings.data ?? []).map((p) => ({
       id: p.id,
       plan_crop_id: p.plan_crop_id,

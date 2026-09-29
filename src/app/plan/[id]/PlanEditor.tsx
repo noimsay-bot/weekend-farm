@@ -39,6 +39,7 @@ export type EditorData = {
   warnings: RotationWarning[];
   plantings: PlantingRow[];
   heatPicks: string[];
+  lastYearReference: string[];
 };
 
 type Tool = "paint" | "companion" | "erase" | "look";
@@ -242,6 +243,16 @@ export function PlanEditor({ data }: { data: EditorData }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {data.lastYearReference.length > 0 && (
+        <details className="rounded-lg bg-white p-3 text-sm" open={editable}>
+          <summary className="cursor-pointer font-semibold">작년 이맘때 결산</summary>
+          <ul className="mt-2 flex flex-col gap-1 text-neutral-700">
+            {data.lastYearReference.map((l) => (
+              <li key={l}>• 작년 {l}</li>
+            ))}
+          </ul>
+        </details>
+      )}
       {editable && (
         <div className="flex flex-col gap-2">
           <div className="grid grid-cols-4 gap-1 text-sm">
@@ -421,6 +432,9 @@ export function PlanEditor({ data }: { data: EditorData }) {
             </Link>
           )}
           <PlantingsPanel plantings={data.plantings} cropById={cropById} crops={data.crops} planId={data.plan.id} />
+          <Link href={`/plan/${data.plan.id}/summary`}>
+            <Button variant="secondary">작기 결산</Button>
+          </Link>
         </>
       )}
 

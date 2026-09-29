@@ -11,6 +11,7 @@ import { heatAdviceItems } from "@/lib/notify/heat";
 import { sendToUser } from "./push";
 import { syncPreventionTasks } from "./prevention-job";
 import { collectWeeklyFarmInfo } from "./weekly-info";
+import { generateSeasonSummaries } from "@/lib/summary/generate";
 import { recomputeFarmTiming, refreshFarmWeather } from "./weather-job";
 
 type Farm = { id: string; name: string; lat: number; lng: number; region: string | null; nearest_station_id: string | null };
@@ -205,6 +206,7 @@ export async function runForAllFarms(db: SupabaseClient, today: string, hourKst:
       if (mode === "daily") {
         r.timing = await recomputeFarmTiming(db, farm, today);
         r.prevention = await syncPreventionTasks(db, farm, today);
+        r.summaries = await autoSummaries(db, farm.id);
       }
       const items = await collectFarmItems(db, farm, today, mode);
       r.items = items.length;
@@ -228,4 +230,20 @@ async function refreshAlertsOnly(db: SupabaseClient, farm: Farm, serviceKey: str
     );
   }
   return { alerts: alerts.length };
+}
+
+// 작기 내 모든 식재가 종료된 확정 계획 중 결산이 없는 계획은 자동 결산
+async function autoSummaries(db: SupabaseClient, farmId: string) {
+  const { data: plans } = await db
+    .from("field_plans")
+    .select("id, plantings(status), season_summaries(id)")
+    .eq("farm_id", farmId)
+    .eq("status", "confirmed");
+  let made = 0;
+  for (const p of (plans ?? []) as { id: string; plantings: { status: string }[]; season_summaries: { id: string }[] }[]) {
+    if (p.plantings.length && p.plantings.every((pl) => pl.status !== "active") && p.season_summaries.length === 0) {
+      made += await generateSeasonSummaries(db, p.id);
+    }
+  }
+  return made;
 }
