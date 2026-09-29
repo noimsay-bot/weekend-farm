@@ -38,6 +38,7 @@ export type EditorData = {
   approvedIds: string[];
   warnings: RotationWarning[];
   plantings: PlantingRow[];
+  heatPicks: string[];
 };
 
 type Tool = "paint" | "companion" | "erase" | "look";
@@ -418,6 +419,7 @@ export function PlanEditor({ data }: { data: EditorData }) {
           crops={data.crops}
           tags={data.tags}
           companions={data.companions}
+          heatPicks={data.heatPicks}
           selected={selected}
           onSelect={(id) => {
             setSelected(id);

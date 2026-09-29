@@ -4,6 +4,49 @@ import { createClient } from "@/lib/supabase/server";
 import { seasonLabel, type PlanSeason } from "@/lib/season";
 import { Screen } from "@/components/ui";
 import { PlanEditor, type EditorData } from "./PlanEditor";
+import { inMonthDayRange } from "@/lib/dates";
+
+const SEASON_ORDER: Record<string, number> = { spring: 0, autumn: 1, overwinter: 2 };
+
+// 여름 작기(봄 계획, 4~8월) 폭염기 추천: 고온 내성 높음 + 6~8월 관행 파종 기간 + 연작 경고 없음 (M10)
+async function heatPicks(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  farmId: string,
+  year: number,
+  region: string | null,
+): Promise<string[]> {
+  const [{ data: strong }, { data: plans }] = await Promise.all([
+    supabase
+      .from("crops")
+      .select("id, family_id, rotation_risk, rest_seasons, crop_regional_calendars(region, activity, start_month, start_day, end_month, end_day)")
+      .eq("heat_tolerance", "high")
+      .eq("status", "confirmed"),
+    supabase.from("field_plans").select("year, season, field_plan_cells(crops(family_id))").eq("farm_id", farmId).eq("status", "confirmed"),
+  ]);
+  const history = ((plans ?? []) as unknown as { year: number; season: string; field_plan_cells: { crops: { family_id: string | null } }[] }[])
+    .filter((p) => p.year * 3 + SEASON_ORDER[p.season] < year * 3)
+    .sort((a, b) => b.year * 3 + SEASON_ORDER[b.season] - (a.year * 3 + SEASON_ORDER[a.season]))
+    .map((p) => new Set(p.field_plan_cells.map((c) => c.crops.family_id).filter(Boolean)));
+  const summer = ["06-01", "06-15", "07-01", "07-15", "08-01", "08-15"].map((d) => `${year}-${d}`);
+  return ((strong ?? []) as unknown as {
+    id: string;
+    family_id: string | null;
+    rotation_risk: string | null;
+    rest_seasons: number | null;
+    crop_regional_calendars: { region: string; activity: string; start_month: number; start_day: number; end_month: number; end_day: number }[];
+  }[])
+    .filter((c) => {
+      const sow = c.crop_regional_calendars.filter((w) => w.activity !== "harvest");
+      const regional = sow.filter((w) => w.region === region);
+      const windows = regional.length ? regional : sow.filter((w) => w.region === "전국");
+      if (!windows.some((w) => summer.some((d) => inMonthDayRange(d, w)))) return false;
+      if (c.rotation_risk === "high" && c.family_id) {
+        return !history.slice(0, Math.max(1, c.rest_seasons ?? 1)).some((f) => f.has(c.family_id));
+      }
+      return true;
+    })
+    .map((c) => c.id);
+}
 
 export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
   const { id } = await params;
@@ -11,7 +54,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
 
   const { data: plan } = await supabase
     .from("field_plans")
-    .select("id, farm_id, year, season, status, farms(name, width_m, height_m, onboarding_has_planted)")
+    .select("id, farm_id, year, season, status, farms(name, width_m, height_m, onboarding_has_planted, region)")
     .eq("id", id)
     .maybeSingle();
   if (!plan) notFound();
@@ -37,7 +80,14 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
         .order("created_at"),
     ]);
 
-  const farm = plan.farms as unknown as { name: string; width_m: number | null; height_m: number | null; onboarding_has_planted: boolean | null };
+  const farm = plan.farms as unknown as {
+    name: string;
+    width_m: number | null;
+    height_m: number | null;
+    onboarding_has_planted: boolean | null;
+    region: string | null;
+  };
+  const picks = plan.season === "spring" && plan.status !== "confirmed" ? await heatPicks(supabase, plan.farm_id, plan.year, farm.region) : [];
 
   const data: EditorData = {
     plan: { id: plan.id, farmId: plan.farm_id, year: plan.year, season: plan.season as PlanSeason, status: plan.status },
@@ -61,6 +111,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
     memberIds: (members.data ?? []).map((m) => m.user_id),
     approvedIds: (approvals.data ?? []).map((a) => a.user_id),
     warnings: warnings.data ?? [],
+    heatPicks: picks,
     plantings: (plantings.data ?? []).map((p) => ({
       id: p.id,
       crop_id: p.crop_id,

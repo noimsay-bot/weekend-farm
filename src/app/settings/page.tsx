@@ -24,6 +24,7 @@ export default async function SettingsPage() {
       <nav className="flex flex-col divide-y rounded-lg bg-white text-sm">
         {[
           ["/settings/farm", "농장 기준값 (밭 크기·칸·비 판정)"],
+          ["/settings/fertilizer", "비료 제품 (밑거름·추비)"],
           ["/settings/notifications", "알림 설정"],
           ["/settings/routine", "밭 도착 시 자동 열기 (갤럭시 루틴)"],
           ["/plan", "계획 목록·멤버 초대"],

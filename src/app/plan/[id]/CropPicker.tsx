@@ -22,6 +22,7 @@ export function CropPicker({
   crops,
   tags,
   companions,
+  heatPicks = [],
   selected,
   onSelect,
   onClose,
@@ -29,15 +30,21 @@ export function CropPicker({
   crops: PickerCrop[];
   tags: { id: string; name: string }[];
   companions: Companion[];
+  heatPicks?: string[];
   selected: string | null;
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
   const [tag, setTag] = useState<string | null>(null);
+  const [heatOnly, setHeatOnly] = useState(false);
+  const heat = new Set(heatPicks);
   const [q, setQ] = useState("");
   const good = useMemo(() => new Set(selected ? goodCompanionsOf(selected, companions) : []), [selected, companions]);
 
-  const list = crops.filter((c) => (!tag || c.tagIds.includes(tag)) && (!q || c.name.includes(q.trim())));
+  const list = crops
+    .filter((c) => (!tag || c.tagIds.includes(tag)) && (!q || c.name.includes(q.trim())) && (!heatOnly || heat.has(c.id)))
+    // 폭염기 추천 작물을 먼저
+    .sort((a, b) => Number(heat.has(b.id)) - Number(heat.has(a.id)));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40" onClick={onClose}>
@@ -59,11 +66,22 @@ export function CropPicker({
         />
         <div className="flex gap-2 overflow-x-auto pb-1 text-sm">
           <button
-            className={`shrink-0 rounded-full px-3 py-1 ${tag === null ? "bg-primary text-white" : "border bg-white"}`}
-            onClick={() => setTag(null)}
+            className={`shrink-0 rounded-full px-3 py-1 ${tag === null && !heatOnly ? "bg-primary text-white" : "border bg-white"}`}
+            onClick={() => {
+              setTag(null);
+              setHeatOnly(false);
+            }}
           >
             전체
           </button>
+          {heat.size > 0 && (
+            <button
+              className={`shrink-0 rounded-full px-3 py-1 ${heatOnly ? "bg-orange-600 text-white" : "border border-orange-400 bg-white text-orange-700"}`}
+              onClick={() => setHeatOnly(!heatOnly)}
+            >
+              폭염기 추천
+            </button>
+          )}
           {tags.map((t) => (
             <button
               key={t.id}
@@ -80,7 +98,10 @@ export function CropPicker({
               <button className="flex w-full items-center gap-3 px-3 py-3 text-left" onClick={() => onSelect(c.id)}>
                 <span className="h-5 w-5 shrink-0 rounded" style={{ background: color(c.id) }} />
                 <span className={c.id === selected ? "font-semibold" : ""}>{c.name}</span>
-                {good.has(c.id) && <span className="ml-auto text-xs text-primary">궁합 좋음</span>}
+                <span className="ml-auto flex gap-1 text-xs">
+                  {heat.has(c.id) && <span className="text-orange-700">고온 강함</span>}
+                  {good.has(c.id) && <span className="text-primary">궁합 좋음</span>}
+                </span>
               </button>
             </li>
           ))}
