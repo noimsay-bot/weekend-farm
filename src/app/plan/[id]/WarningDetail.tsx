@@ -33,6 +33,7 @@ export function WarningDetail({
   warnings,
   hits,
   families,
+  historyHref,
   onClose,
 }: {
   pos: { x: number; y: number };
@@ -41,6 +42,7 @@ export function WarningDetail({
   warnings: RotationWarning[];
   hits: CompanionHit[];
   families: Family[];
+  historyHref?: string | null;
   onClose: () => void;
 }) {
   const name = (id: string | null | undefined) => (id ? (cropById.get(id)?.name ?? "알 수 없는 작물") : "");
@@ -107,6 +109,11 @@ export function WarningDetail({
       ))}
 
       {warnings.length === 0 && hits.length === 0 && cell && <p className="text-neutral-500">경고 없음</p>}
+      {historyHref && (
+        <a href={historyHref} className="text-primary underline">
+          이 작물 히스토리 보기
+        </a>
+      )}
     </section>
   );
 }

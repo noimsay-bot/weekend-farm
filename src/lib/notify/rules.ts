@@ -70,12 +70,12 @@ export type PesticideUse = {
 
 // 방제 안전사용기준: 수확 예정일이 '마지막 살포일 + 수확 전 금지일수'보다 빠르면 경고
 export function preHarvestConflicts(uses: PesticideUse[], harvests: { planCropId: string; date: string }[]) {
-  const out: { cropName: string; ingredient: string; harvestDate: string; safeFrom: string }[] = [];
+  const out: { planCropId: string; cropName: string; ingredient: string; harvestDate: string; safeFrom: string }[] = [];
   for (const u of uses) {
     if (u.safeDays === null) continue;
     const safeFrom = addDays(u.appliedOn, u.safeDays);
     for (const h of harvests.filter((h) => h.planCropId === u.planCropId)) {
-      if (h.date < safeFrom) out.push({ cropName: u.cropName, ingredient: u.ingredient, harvestDate: h.date, safeFrom });
+      if (h.date < safeFrom) out.push({ planCropId: u.planCropId, cropName: u.cropName, ingredient: u.ingredient, harvestDate: h.date, safeFrom });
     }
   }
   return out;

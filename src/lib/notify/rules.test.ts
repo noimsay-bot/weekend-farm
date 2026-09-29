@@ -63,7 +63,7 @@ describe("pesticide pre-harvest interval", () => {
         { planCropId: "a", date: "2026-07-09" },
       ],
     );
-    expect(conflicts).toEqual([{ cropName: "고추", ingredient: "성분A", harvestDate: "2026-07-05", safeFrom: "2026-07-08" }]);
+    expect(conflicts).toEqual([{ planCropId: "a", cropName: "고추", ingredient: "성분A", harvestDate: "2026-07-05", safeFrom: "2026-07-08" }]);
   });
 });
 

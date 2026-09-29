@@ -75,7 +75,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
       supabase.rpc("plan_rotation_warnings", { p_plan_id: id }),
       supabase
         .from("plantings")
-        .select("id, crop_id, status, planned_plant_count, planting_cells(cell_id)")
+        .select("id, plan_crop_id, crop_id, status, planned_plant_count, planting_cells(cell_id)")
         .eq("plan_id", id)
         .order("created_at"),
     ]);
@@ -114,6 +114,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
     heatPicks: picks,
     plantings: (plantings.data ?? []).map((p) => ({
       id: p.id,
+      plan_crop_id: p.plan_crop_id,
       crop_id: p.crop_id,
       status: p.status,
       planned_plant_count: p.planned_plant_count,

@@ -8,6 +8,7 @@ import type { PickerCrop } from "./CropPicker";
 
 export type PlantingRow = {
   id: string;
+  plan_crop_id: string;
   crop_id: string;
   status: string;
   planned_plant_count: number | null;

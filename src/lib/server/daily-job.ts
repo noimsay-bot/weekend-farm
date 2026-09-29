@@ -2,12 +2,15 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, formatKDate } from "@/lib/dates";
 import { composeForUser, type Item, type NotificationType } from "@/lib/notify/compose";
-import { drainageAlert, frostDays, preHarvestConflicts, shouldLogRain, wateringDue, type WateringLog } from "@/lib/notify/rules";
+import { drainageAlert, frostDays, shouldLogRain } from "@/lib/notify/rules";
+import { loadPesticideConflicts, loadWateringDue } from "@/lib/alerts";
 import { toKmaGrid } from "@/lib/weather/grid";
 import { toDaily } from "@/lib/weather/recommend";
 import { nearest, WARNING_OFFICES } from "@/lib/weather/stations";
 import { heatAdviceItems } from "@/lib/notify/heat";
 import { sendToUser } from "./push";
+import { syncPreventionTasks } from "./prevention-job";
+import { collectWeeklyFarmInfo } from "./weekly-info";
 import { recomputeFarmTiming, refreshFarmWeather } from "./weather-job";
 
 type Farm = { id: string; name: string; lat: number; lng: number; region: string | null; nearest_station_id: string | null };
@@ -132,74 +135,14 @@ export async function collectFarmItems(db: SupabaseClient, farm: Farm, today: st
 
   // 물주기 (작물별, 주작물만)
   if (settings?.watering_alert_enabled && activeIds.length) {
-    const mains = (active ?? []).filter((a) => !a.is_companion);
-    const [{ data: crops }, { data: plantings }, { data: logs }] = await Promise.all([
-      db.from("crops").select("id, watering_interval_days").in("id", mains.map((m) => m.crop_id)),
-      db.from("plantings").select("plan_crop_id, sow_date, transplant_date").in("plan_crop_id", mains.map((m) => m.id)).eq("status", "active"),
-      db
-        .from("work_log_targets")
-        .select("plan_crop_id, work_logs!inner(work_date, work_type)")
-        .in("plan_crop_id", mains.map((m) => m.id))
-        .in("work_logs.work_type", ["watering", "rain"])
-        .gte("work_logs.work_date", addDays(today, -60)),
-    ]);
-    const interval = new Map((crops ?? []).map((c) => [c.id, c.watering_interval_days as number | null]));
-    const planted = new Map<string, string>();
-    for (const p of plantings ?? []) {
-      const d = p.transplant_date ?? p.sow_date;
-      if (d && (!planted.has(p.plan_crop_id) || d < planted.get(p.plan_crop_id)!)) planted.set(p.plan_crop_id, d);
-    }
-    const due = wateringDue(
-      mains.map((m) => ({ planCropId: m.id, cropName: m.crop_name, intervalDays: interval.get(m.crop_id) ?? null, plantedOn: planted.get(m.id) ?? null })),
-      ((logs ?? []) as unknown as { plan_crop_id: string; work_logs: { work_date: string; work_type: "watering" | "rain" } }[]).map(
-        (l): WateringLog => ({ plan_crop_id: l.plan_crop_id, work_date: l.work_logs.work_date, work_type: l.work_logs.work_type }),
-      ),
-      forecast,
-      { popThreshold: settings.rain_pop_threshold ?? 60, wateringRainMm: num(settings.watering_rain_mm) },
-      today,
-    );
-    for (const w of due) {
+    for (const w of await loadWateringDue(db, active ?? [], forecast, settings, today)) {
       items.push({ type: "watering", text: `${w.cropName} 물주기 (마지막 ${w.lastType === "rain" ? "비" : w.lastType === "watering" ? "물주기" : "심은 날"} 후 ${w.daysSince}일)` });
     }
   }
 
   // 방제 안전사용기준: 최근 방제 성분의 수확 전 금지기간과 수확 예정일
-  const { data: pestLogs } = await db
-    .from("work_logs")
-    .select("work_date, work_log_targets(plan_crop_id, plan_crops(crop_id, crops(name))), work_log_pesticides(crop_pest_controls(crop_id, ingredient_name, safe_days_before_harvest))")
-    .eq("farm_id", farm.id)
-    .eq("work_type", "pest_control")
-    .gte("work_date", addDays(today, -90));
-  const uses = ((pestLogs ?? []) as unknown as {
-    work_date: string;
-    work_log_targets: { plan_crop_id: string; plan_crops: { crop_id: string; crops: { name: string } } }[];
-    work_log_pesticides: { crop_pest_controls: { crop_id: string; ingredient_name: string; safe_days_before_harvest: number | null } }[];
-  }[]).flatMap((l) =>
-    l.work_log_targets.flatMap((t) =>
-      l.work_log_pesticides
-        .filter((p) => p.crop_pest_controls.crop_id === t.plan_crops.crop_id)
-        .map((p) => ({
-          planCropId: t.plan_crop_id,
-          cropName: t.plan_crops.crops.name,
-          appliedOn: l.work_date,
-          ingredient: p.crop_pest_controls.ingredient_name,
-          safeDays: p.crop_pest_controls.safe_days_before_harvest,
-        })),
-    ),
-  );
-  if (uses.length) {
-    const { data: harvests } = await db
-      .from("tasks")
-      .select("plan_crop_id, calculated_date, adjusted_date")
-      .eq("farm_id", farm.id)
-      .eq("task_type", "harvest")
-      .eq("status", "pending");
-    for (const c of preHarvestConflicts(
-      uses,
-      (harvests ?? []).map((h) => ({ planCropId: h.plan_crop_id, date: h.adjusted_date ?? h.calculated_date })),
-    )) {
-      items.push({ type: "pesticide_safety", text: `${c.cropName} 수확 예정 ${formatKDate(c.harvestDate)}은 ${c.ingredient} 수확 전 금지기간이에요 (${formatKDate(c.safeFrom)}부터 수확)` });
-    }
+  for (const c of await loadPesticideConflicts(db, farm.id, today)) {
+    items.push({ type: "pesticide_safety", text: `${c.cropName} 수확 예정 ${formatKDate(c.harvestDate)}은 ${c.ingredient} 수확 전 금지기간이에요 (${formatKDate(c.safeFrom)}부터 수확)` });
   }
 
   // 서리 가능성 (예보 최저 0℃ 이하)
@@ -207,6 +150,16 @@ export async function collectFarmItems(db: SupabaseClient, farm: Farm, today: st
   if (frost.length) {
     const guide = await guideFor(db, "frost");
     items.push({ type: "weather_alert", text: `${frost.map(formatKDate).join(", ")} 최저기온 0℃ 이하 예보 — 서리 대비${guide ? `: ${guide}` : ""}` });
+  }
+
+  // 주간농사정보: 재배 중 작물에 해당하는 병해충 항목
+  if (active?.length) {
+    const { data: weekly } = await db
+      .from("weekly_farm_info")
+      .select("crop_name, summary, crop_id")
+      .in("crop_id", [...new Set(active.map((a) => a.crop_id))])
+      .gte("week_start", addDays(today, -7));
+    for (const w of weekly ?? []) items.push({ type: "pest_prevention", text: `주간농사정보 · ${w.crop_name}: ${w.summary}` });
   }
 
   // 폭염기 대응 (P8)
@@ -233,6 +186,14 @@ export async function runForAllFarms(db: SupabaseClient, today: string, hourKst:
   const { data: farms, error } = await db.from("farms").select("id, name, lat, lng, region, nearest_station_id");
   if (error) throw error;
   const report: Record<string, unknown>[] = [];
+  const nongsaroKey = process.env.NONGSARO_API_KEY;
+  if (mode === "daily" && nongsaroKey) {
+    try {
+      report.push({ weeklyFarmInfo: await collectWeeklyFarmInfo(db, nongsaroKey, today) });
+    } catch (e) {
+      report.push({ weeklyFarmInfo: (e as Error).message });
+    }
+  }
   for (const farm of (farms ?? []) as Farm[]) {
     const r: Record<string, unknown> = { farm: farm.id };
     try {
@@ -241,7 +202,10 @@ export async function runForAllFarms(db: SupabaseClient, today: string, hourKst:
       } else {
         r.weather = "DATA_GO_KR_SERVICE_KEY not set";
       }
-      if (mode === "daily") r.timing = await recomputeFarmTiming(db, farm, today);
+      if (mode === "daily") {
+        r.timing = await recomputeFarmTiming(db, farm, today);
+        r.prevention = await syncPreventionTasks(db, farm, today);
+      }
       const items = await collectFarmItems(db, farm, today, mode);
       r.items = items.length;
       r.sent = await notifyFarm(db, farm, items, today);

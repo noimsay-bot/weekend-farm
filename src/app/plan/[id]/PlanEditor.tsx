@@ -223,6 +223,15 @@ export function PlanEditor({ data }: { data: EditorData }) {
     return { byCrop, companionsCount };
   }, [cellList]);
 
+  // 확정된 계획(지난 작기 포함)의 칸을 누르면 그 작물의 히스토리로
+  function historyHref(pos: { x: number; y: number }): string | null {
+    if (status !== "confirmed") return null;
+    const cell = cells.get(key(pos.x, pos.y));
+    if (!cell?.id) return null;
+    const planting = data.plantings.find((p) => p.cellIds.includes(cell.id!));
+    return planting ? `/history/${planting.plan_crop_id}?cell=${pos.x},${pos.y}` : null;
+  }
+
   const selectedCrop = selected ? cropById.get(selected) : null;
   const goodForSelected = selected ? goodCompanionsOf(selected, data.companions).map((id) => cropById.get(id)?.name).filter(Boolean) : [];
 
@@ -353,6 +362,7 @@ export function PlanEditor({ data }: { data: EditorData }) {
           warnings={warnings.filter((w) => w.x === focus.x && w.y === focus.y)}
           hits={hits.filter((h) => (h.x === focus.x && h.y === focus.y) || (h.otherX === focus.x && h.otherY === focus.y))}
           families={data.families}
+          historyHref={historyHref(focus)}
           onClose={() => setFocus(null)}
         />
       )}
