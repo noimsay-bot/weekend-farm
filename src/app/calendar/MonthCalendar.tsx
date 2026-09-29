@@ -16,6 +16,7 @@ export type CalTask = {
   adjusted_date: string | null;
   status: "pending" | "done";
   details: { reason?: string };
+  recommendation: { action: "earlier" | "later"; date: string; rainDates: string[] } | null;
   planting_id: string | null;
   plantings: { crops: { schedule_tolerance_days: number | null } } | null;
 };
@@ -154,6 +155,18 @@ export function MonthCalendar({
                 {dueDate(t) < today && t.status === "pending" && <span className="ml-1 font-semibold text-red-600">지연</span>}
               </p>
               {warn && <p className="text-xs text-amber-700">⚠ 허용 오차({tolerance}일)를 넘겨 조정했어요.</p>}
+              {t.status === "pending" && t.recommendation && t.recommendation.date !== dueDate(t) && (
+                <div className="mt-2 rounded bg-sky-50 p-2 text-xs text-sky-900">
+                  <p>
+                    비 예보({t.recommendation.rainDates.map(formatKDate).join(", ")}) —{" "}
+                    {t.recommendation.action === "earlier" ? "비 오기 전 앞당겨 수확" : "비 온 뒤 늦춰 수확"}{" "}
+                    {formatKDate(t.recommendation.date)} 권장
+                  </p>
+                  <button className="mt-1 h-8 rounded bg-sky-700 px-3 text-white" disabled={busy} onClick={() => adjust(t, t.recommendation!.date)}>
+                    권장안 수락
+                  </button>
+                </div>
+              )}
               {t.status === "pending" && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button className="h-9 rounded bg-primary px-3 text-white" disabled={busy} onClick={() => complete(t)}>

@@ -20,7 +20,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const [{ data: tasks }, { data: logs }, claims] = await Promise.all([
     supabase
       .from("tasks")
-      .select("id, task_type, title, calculated_date, adjusted_date, status, details, planting_id, plantings(crops(schedule_tolerance_days))")
+      .select("id, task_type, title, calculated_date, adjusted_date, status, details, recommendation, planting_id, plantings(crops(schedule_tolerance_days))")
       .eq("farm_id", farm.id)
       .neq("status", "cancelled")
       .or(`and(calculated_date.gte.${start},calculated_date.lte.${end}),and(adjusted_date.gte.${start},adjusted_date.lte.${end})`),
