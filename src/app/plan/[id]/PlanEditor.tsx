@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { companionHits, companionIndex, goodCompanionsOf, type Companion } from "@/lib/companions";
 import { cellsToM2, formatArea, plantsForArea } from "@/lib/units";
+import { GRID_MAX_HEIGHT, gridWidth } from "@/lib/grid-fit";
 import { seasonOf, todayKst, type PlanSeason } from "@/lib/season";
 import { Button, ErrorText } from "@/components/ui";
 import { CropPicker, type PickerCrop } from "./CropPicker";
@@ -237,7 +238,7 @@ export function PlanEditor({ data }: { data: EditorData }) {
   const goodForSelected = selected ? goodCompanionsOf(selected, data.companions).map((id) => cropById.get(id)?.name).filter(Boolean) : [];
 
   // 기본은 화면 폭에 맞추고, 확대하면 가로 스크롤로 이동한다. 칸이 충분히 크면 작물 첫 글자를 보인다.
-  const showLabels = cols / zoom <= 30;
+  const showLabels = Math.max(cols, rows) / zoom <= 30;
   const current = seasonOf(todayKst());
   const isCurrentSeason = current.year === data.plan.year && current.season === data.plan.season;
 
@@ -307,13 +308,14 @@ export function PlanEditor({ data }: { data: EditorData }) {
         </span>
       </div>
 
-      <div className="max-h-[60vh] overflow-auto rounded-lg border border-neutral-300 bg-[#e9e2d0]">
+      <div className="overflow-auto rounded-lg border border-neutral-300 bg-[#e9e2d0]" style={{ maxHeight: zoom === 1 ? undefined : GRID_MAX_HEIGHT }}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${cols} ${rows}`}
           style={{
-            width: `${zoom * 100}%`,
+            width: gridWidth(cols, rows, zoom),
             aspectRatio: `${cols} / ${rows}`,
+            margin: "0 auto",
             touchAction: editable && tool !== "look" ? "none" : "auto",
             display: "block",
           }}

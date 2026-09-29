@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { BADGE_LABEL, type Badge } from "@/lib/dashboard/badges";
 import { formatKDate } from "@/lib/dates";
 import { SEASON_LABEL, type PlanSeason } from "@/lib/season";
+import { gridWidth } from "@/lib/grid-fit";
 import type { DashboardData, DashPlanting } from "./load";
 import { BadgeSheet } from "./BadgeSheet";
 
@@ -68,7 +69,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
       </div>
 
       <div className="overflow-auto rounded-lg border border-neutral-300 bg-[#e9e2d0]">
-        <svg viewBox={`0 0 ${data.cols} ${data.rows}`} style={{ width: "100%", aspectRatio: `${data.cols} / ${data.rows}`, display: "block" }}>
+        <svg viewBox={`0 0 ${data.cols} ${data.rows}`} style={{ width: gridWidth(data.cols, data.rows), aspectRatio: `${data.cols} / ${data.rows}`, display: "block", margin: "0 auto" }}>
           {data.cells.map((c) => (
             <g key={`${c.x},${c.y}`} onClick={() => openCell(c.x, c.y)} style={{ cursor: "pointer" }}>
               <rect
@@ -80,7 +81,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
                 fill={cropColor(c.crop_id)}
                 opacity={cellOwner.has(`${c.x},${c.y}`) ? 1 : 0.35}
               />
-              {data.cols <= 30 && (
+              {Math.max(data.cols, data.rows) <= 30 && (
                 <text x={c.x + 0.5} y={c.y + 0.62} fontSize={0.4} textAnchor="middle" fill="#1f2a1d" pointerEvents="none">
                   {(data.cropNames[c.crop_id] ?? "").slice(0, 1)}
                 </text>
