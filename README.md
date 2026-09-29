@@ -26,9 +26,9 @@ npm run build
 2. Project Settings > API에서 URL과 publishable key를 `.env.local`에 넣는다.
 3. 마이그레이션 적용: SQL Editor에 `supabase/migrations/*.sql`을 파일명 순서대로 붙여넣고 실행.
    (또는 `npx supabase link --project-ref <ref>` 후 `npx supabase db push`)
-4. Authentication > Providers > Email
+4. Authentication > CONFIGURATION > **Sign In / Providers** > Email 항목 클릭
    - Email OTP Length: **6**
-5. Authentication > Email Templates — **Magic Link**와 **Confirm signup** 두 템플릿 본문을 코드 방식으로 바꾼다
+5. Authentication > NOTIFICATIONS > **Emails** — **Magic Link**와 **Confirm signup** 두 템플릿 본문을 코드 방식으로 바꾼다
    (앱은 링크가 아니라 코드를 입력받는다):
    ```html
    <h2>주말텃밭 로그인 코드</h2>
