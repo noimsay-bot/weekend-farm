@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { BottomNav } from "@/components/BottomNav";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         {children}
+        <BottomNav />
         <ServiceWorkerRegister />
       </body>
     </html>
