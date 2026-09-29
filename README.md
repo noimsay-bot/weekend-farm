@@ -45,3 +45,14 @@ HTTPS 배포 주소에서 Chrome 메뉴 > **홈 화면에 추가** > 설치.
 
 `public/icons/`는 `node scripts/gen-icons.mjs`로 생성한다.
 # weekend-farm
+
+## 작물 데이터 수집 (P2)
+
+1. `.env.local`에 `SUPABASE_SERVICE_ROLE_KEY`, `NONGSARO_API_KEY`, `DATA_GO_KR_SERVICE_KEY`, `PSIS_API_KEY`를 넣는다 (`.env.example` 참고).
+   service role 키는 로컬 수집에만 쓰고 Vercel·Git에 올리지 않는다.
+2. `npm run collect` — 부록 A 85종 시드 → 텃밭가꾸기 원문 추출 → 비료 처방 → 농약안전사용지침 → 재해예방 문구.
+   API 호출 사이에 0.7초 지연, 실패 시 3회 재시도 (`COLLECT_INTERVAL_MS`로 조정).
+3. 결과는 모두 `draft`로 저장되고 `missing_report.md`가 생성된다.
+4. 앱에서 `/admin/crops` → 필드별로 근거 원문을 보고 **추출값 승인** 또는 **직접 입력** → 모두 끝나면 **확정**.
+   관리자가 없으면 이 화면에서 "첫 관리자로 등록하기"를 누른다 (최초 1명만).
+   앱 일반 화면에는 확정된 작물만 보인다.

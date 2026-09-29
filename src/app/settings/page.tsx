@@ -21,6 +21,9 @@ export default async function SettingsPage() {
         </p>
         <LocationForm farmId={farm.id} initial={{ lat: farm.lat, lng: farm.lng }} />
       </section>
+      <Link href="/admin/crops" className="text-sm text-primary underline">
+        작물 데이터 관리 (관리자)
+      </Link>
     </Screen>
   );
 }
