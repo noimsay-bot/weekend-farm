@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentFarm, onboardingPath } from "@/lib/farm";
@@ -30,6 +31,12 @@ export default async function PlanPage({ searchParams }: PageProps<"/plan">) {
         <h2 className="font-semibold">멤버 {members?.length ?? 0}명</h2>
         <InviteLink farmId={farm.id} />
       </section>
+      <Link
+        href="/settings"
+        className="flex h-12 items-center justify-center rounded-lg border border-primary bg-white font-semibold text-primary"
+      >
+        농장 설정 (위치 수정)
+      </Link>
       <SignOut />
     </Screen>
   );

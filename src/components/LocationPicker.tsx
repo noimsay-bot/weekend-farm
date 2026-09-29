@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CircleMarker, Map as LeafletMap } from "leaflet";
+import type * as Leaflet from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button, ErrorText } from "@/components/ui";
 import { geocode, type GeocodeResult } from "@/lib/geocode";
@@ -21,7 +22,9 @@ export function LocationPicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<CircleMarker | null>(null);
+  const leafletRef = useRef<typeof Leaflet | null>(null);
   const onChangeRef = useRef(onChange);
+  const valueRef = useRef(value);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -31,20 +34,44 @@ export function LocationPicker({
 
   useEffect(() => {
     onChangeRef.current = onChange;
-  }, [onChange]);
+    valueRef.current = value;
+  }, [onChange, value]);
+
+  function placeMarker(next: LatLng) {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    if (markerRef.current) {
+      markerRef.current.setLatLng([next.lat, next.lng]);
+    } else {
+      markerRef.current = L.circleMarker([next.lat, next.lng], {
+        radius: 10,
+        color: "#ffffff",
+        weight: 3,
+        fillColor: "#3f7d3a",
+        fillOpacity: 1,
+      }).addTo(map);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
     // leaflet은 window를 참조하므로 클라이언트에서만 불러온다.
     import("leaflet").then((L) => {
       if (cancelled || !containerRef.current || mapRef.current) return;
-      const map = L.map(containerRef.current).setView([KOREA_CENTER.lat, KOREA_CENTER.lng], 7);
+      // 이미 위치가 있으면(설정 화면) 그 위치에서 시작한다.
+      const start = valueRef.current;
+      const map = start
+        ? L.map(containerRef.current).setView([start.lat, start.lng], 16)
+        : L.map(containerRef.current).setView([KOREA_CENTER.lat, KOREA_CENTER.lng], 7);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
       map.on("click", (e) => onChangeRef.current({ lat: e.latlng.lat, lng: e.latlng.lng }));
       mapRef.current = map;
+      leafletRef.current = L;
+      if (start) placeMarker(start);
     });
     return () => {
       cancelled = true;
@@ -56,21 +83,7 @@ export function LocationPicker({
 
   // 선택된 위치에 표시를 옮긴다.
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !value) return;
-    import("leaflet").then((L) => {
-      if (markerRef.current) {
-        markerRef.current.setLatLng([value.lat, value.lng]);
-      } else {
-        markerRef.current = L.circleMarker([value.lat, value.lng], {
-          radius: 10,
-          color: "#ffffff",
-          weight: 3,
-          fillColor: "#3f7d3a",
-          fillOpacity: 1,
-        }).addTo(map);
-      }
-    });
+    if (value) placeMarker(value);
   }, [value]);
 
   function moveTo(next: LatLng, zoom = 17) {
