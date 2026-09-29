@@ -5,74 +5,82 @@ import { createClient } from "@/lib/supabase/client";
 import { Button, ErrorText, Field, Screen } from "@/components/ui";
 
 export function LoginForm({ next }: { next: string }) {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function sendCode(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const { error } = await createClient().auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true },
-    });
-    setBusy(false);
-    if (error) return setError("코드를 보내지 못했어요. 잠시 후 다시 시도하세요.");
-    setStep("code");
-  }
+    const auth = createClient().auth;
 
-  async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    const { error } = await createClient().auth.verifyOtp({ email, token: code, type: "email" });
-    if (error) {
-      setBusy(false);
-      return setError("코드가 맞지 않거나 만료됐어요.");
+    if (mode === "signup") {
+      const { data, error } = await auth.signUp({ email, password });
+      if (error) {
+        setBusy(false);
+        return setError(
+          error.code === "user_already_exists"
+            ? "이미 가입된 이메일이에요. 로그인하세요."
+            : error.code === "weak_password"
+              ? "비밀번호가 너무 약해요. 6자 이상으로 입력하세요."
+              : "가입하지 못했어요. 잠시 후 다시 시도하세요.",
+        );
+      }
+      // Supabase의 Confirm email이 켜져 있으면 세션 없이 확인 메일만 발송된다.
+      if (!data.session) {
+        setBusy(false);
+        return setError("가입 확인 설정이 켜져 있어요. 관리자에게 문의하세요.");
+      }
+    } else {
+      const { error } = await auth.signInWithPassword({ email, password });
+      if (error) {
+        setBusy(false);
+        return setError("이메일 또는 비밀번호가 맞지 않아요.");
+      }
     }
     // 서버 컴포넌트가 새 세션 쿠키를 읽도록 전체 이동
     window.location.replace(next);
   }
 
   return (
-    <Screen title="주말텃밭 로그인">
-      {step === "email" ? (
-        <form onSubmit={sendCode} className="flex flex-col gap-4">
-          <Field
-            label="이메일"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value.trim())}
-          />
-          <ErrorText>{error}</ErrorText>
-          <Button disabled={busy}>{busy ? "보내는 중…" : "6자리 코드 받기"}</Button>
-        </form>
-      ) : (
-        <form onSubmit={verify} className="flex flex-col gap-4">
-          <p className="text-sm text-neutral-600">{email}로 보낸 6자리 코드를 입력하세요.</p>
-          <Field
-            label="인증 코드"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
-            required
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          />
-          <ErrorText>{error}</ErrorText>
-          <Button disabled={busy || code.length !== 6}>{busy ? "확인 중…" : "로그인"}</Button>
-          <Button type="button" variant="secondary" onClick={() => setStep("email")}>
-            이메일 다시 입력
-          </Button>
-        </form>
-      )}
+    <Screen title={mode === "signin" ? "주말텃밭 로그인" : "주말텃밭 회원가입"}>
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <Field
+          label="이메일"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value.trim())}
+        />
+        <Field
+          label="비밀번호"
+          type="password"
+          autoComplete={mode === "signin" ? "current-password" : "new-password"}
+          minLength={6}
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <ErrorText>{error}</ErrorText>
+        <Button disabled={busy}>
+          {busy ? "처리 중…" : mode === "signin" ? "로그인" : "가입하기"}
+        </Button>
+      </form>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => {
+          setMode(mode === "signin" ? "signup" : "signin");
+          setError("");
+        }}
+      >
+        {mode === "signin" ? "처음이에요 (회원가입)" : "이미 계정이 있어요 (로그인)"}
+      </Button>
     </Screen>
   );
 }
