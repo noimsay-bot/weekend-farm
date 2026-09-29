@@ -29,10 +29,17 @@ export function LoginForm({ next }: { next: string }) {
               : "가입하지 못했어요. 잠시 후 다시 시도하세요.",
         );
       }
-      // Supabase의 Confirm email이 켜져 있으면 세션 없이 확인 메일만 발송된다.
+      // 세션이 없으면(이미 가입된 이메일 등) 바로 로그인을 시도한다.
       if (!data.session) {
-        setBusy(false);
-        return setError("가입 확인 설정이 켜져 있어요. 관리자에게 문의하세요.");
+        const { error } = await auth.signInWithPassword({ email, password });
+        if (error) {
+          setBusy(false);
+          return setError(
+            error.code === "email_not_confirmed"
+              ? "Supabase > Sign In / Providers에서 Confirm email을 끄면 바로 가입돼요."
+              : "이미 가입된 이메일이에요. 로그인하세요.",
+          );
+        }
       }
     } else {
       const { error } = await auth.signInWithPassword({ email, password });
