@@ -84,11 +84,17 @@ export function FarmSettingsForm({
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">비 판정 기준</h2>
         <Field label="강수확률 (%) 이상이면 비" inputMode="numeric" value={v.pop} onChange={set("pop")} required />
-        <Field label="예상 강수량 (mm) 이상이면 비 (비우면 확률만)" inputMode="decimal" value={v.rainMm} onChange={set("rainMm")} />
-        <Field label="물주기로 치는 강수량 (mm)" inputMode="decimal" value={v.waterMm} onChange={set("waterMm")} />
-        <p className="text-xs text-neutral-500">비우면 비 자동 기록을 만들지 않아요. 전날 관측 강수량이 이 값 이상이면 모든 작물에 &lsquo;비&rsquo; 기록을 남겨요.</p>
-        <Field label="배수로 점검 경고 강수량 (mm)" inputMode="decimal" value={v.drainMm} onChange={set("drainMm")} />
-        <p className="text-xs text-neutral-500">비우면 호우특보 때만 배수점검 경고를 보내요.</p>
+        <Field label="예상 강수량 (mm) 이상이면 비 (비우면 확률만)" inputMode="decimal" placeholder="추천 1" value={v.rainMm} onChange={set("rainMm")} />
+        <p className="text-xs text-neutral-500">추천 1mm: 이보다 적으면 흩뿌리는 정도지만, 넘으면 잎이 젖어 방제·수확에 지장이 있어요.</p>
+        <Field label="물주기로 치는 강수량 (mm)" inputMode="decimal" placeholder="추천 10" value={v.waterMm} onChange={set("waterMm")} />
+        <p className="text-xs text-neutral-500">
+          비우면 비 자동 기록을 만들지 않아요. 전날 관측 강수량이 이 값 이상이면 모든 작물에 &lsquo;비&rsquo; 기록을 남겨요. 추천 10mm(1㎡에 물 10L를 준
+          셈), 물 빠짐이 좋은 모래흙이면 15mm.
+        </p>
+        <Field label="배수로 점검 경고 강수량 (mm)" inputMode="decimal" placeholder="추천 30" value={v.drainMm} onChange={set("drainMm")} />
+        <p className="text-xs text-neutral-500">
+          비우면 호우특보 때만 배수점검 경고를 보내요. 추천 30mm(하루 강한 비 수준), 물이 잘 고이는 찰흙이면 20mm.
+        </p>
         <label className="flex items-center justify-between rounded-lg bg-white p-3">
           <span>물주기 알림</span>
           <input type="checkbox" className="h-5 w-5" checked={v.watering} onChange={(e) => setV({ ...v, watering: e.target.checked })} />
