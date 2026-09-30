@@ -1,7 +1,8 @@
 // 작물 데이터 수집 (수동 실행): npm run collect
 // 필요한 환경변수(.env.local):
 //   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  (필수)
-//   NONGSARO_API_KEY        농사로 OpenAPI (텃밭가꾸기)
+//   NONGSARO_GARDEN_KEY     농사로 OpenAPI 텃밭가꾸기 정보 (fildMnfct)
+//   NONGSARO_DISASTER_KEY   농사로 OpenAPI 농작물재해예방정보 (frcDsstrPrevnt)
 //   DATA_GO_KR_SERVICE_KEY  공공데이터포털 (비료 표준사용량 처방)
 //   PSIS_API_KEY            농약안전정보시스템 (농약안전사용지침)
 // 키가 없는 소스는 건너뛰고 missing_report.md에 적는다.
@@ -126,7 +127,8 @@ async function main() {
   if (!url || !serviceKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY가 필요합니다 (.env.local)");
   const db = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-  const nongsaroKey = env("NONGSARO_API_KEY");
+  const gardenKey = env("NONGSARO_GARDEN_KEY");
+  const disasterKey = env("NONGSARO_DISASTER_KEY");
   const dataKey = env("DATA_GO_KR_SERVICE_KEY");
   const psisKey = env("PSIS_API_KEY");
   const skipped: string[] = [];
@@ -139,12 +141,12 @@ async function main() {
   const gardenByCrop = new Map<string, { ex: GardenExtraction; url: string }>();
 
   console.log("2/5 농사로 텃밭가꾸기");
-  if (nongsaroKey) {
-    const articles = await listGardenArticles(nongsaroKey);
+  if (gardenKey) {
+    const articles = await listGardenArticles(gardenKey);
     for (const a of articles) {
       const targets = cropsForTitle(a.title);
       if (targets.length === 0) continue;
-      const { text, url: sourceUrl } = await getGardenArticle(nongsaroKey, a.cntntsNo);
+      const { text, url: sourceUrl } = await getGardenArticle(gardenKey, a.cntntsNo);
       const ex = extractGarden(text);
       for (const seed of targets) {
         const crop = crops.get(seed.name)!;
@@ -160,7 +162,7 @@ async function main() {
       }
     }
   } else {
-    skipped.push("NONGSARO_API_KEY 없음: 텃밭가꾸기 원문 수집 건너뜀");
+    skipped.push("NONGSARO_GARDEN_KEY 없음: 텃밭가꾸기 원문 수집 건너뜀");
   }
 
   console.log("3/5 비료 표준사용량 처방");
@@ -214,9 +216,9 @@ async function main() {
   }
 
   console.log("5/5 농작물재해예방정보 (기상특보 대응 문구)");
-  if (nongsaroKey) {
+  if (disasterKey) {
     try {
-      const guides = (await listDisasterGuides(nongsaroKey)).flatMap((a) => guidesFromArticle(a.title, a.text, a.url));
+      const guides = (await listDisasterGuides(disasterKey)).flatMap((a) => guidesFromArticle(a.title, a.text, a.url));
       if (guides.length) {
         await must(db.from("weather_response_guides").delete().is("crop_id", null));
         await must(db.from("weather_response_guides").insert(guides));
@@ -225,6 +227,8 @@ async function main() {
     } catch (e) {
       skipped.push(`농작물재해예방정보 수집 실패: ${(e as Error).message}`);
     }
+  } else {
+    skipped.push("NONGSARO_DISASTER_KEY 없음: 농작물재해예방정보 수집 건너뜀");
   }
 
   // 누락 리포트: DB의 현재 상태 기준

@@ -36,7 +36,7 @@ npm run build
 1. GitHub에 push하면 Vercel이 자동 배포 (Hobby). 함수 리전은 `vercel.json`에서 `icn1`(서울).
 2. Environment Variables (`.env.example` 참고)
    - 공개: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
-   - 비밀: `SUPABASE_SERVICE_ROLE_KEY`, `DATA_GO_KR_SERVICE_KEY`, `NONGSARO_API_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`
+   - 비밀: `SUPABASE_SERVICE_ROLE_KEY`, `DATA_GO_KR_SERVICE_KEY`, `NONGSARO_WEEKLY_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`
 3. 일일 크론: `vercel.json`의 `/api/cron/daily`가 매일 06:00 KST에 실행 (Vercel이 `CRON_SECRET`을 Authorization 헤더로 보냄).
 4. 기상특보 즉시 알림: GitHub 저장소 Settings > Secrets and variables > Actions에 `APP_URL`(배포 주소), `CRON_SECRET`을 등록하면 `.github/workflows/alerts.yml`이 3시간마다 `/api/cron/alerts`를 호출.
 5. 수동 테스트:
@@ -52,7 +52,7 @@ npm run build
 
 ## 작물 데이터 수집 (P2)
 
-1. `.env.local`에 `SUPABASE_SERVICE_ROLE_KEY`, `NONGSARO_API_KEY`, `DATA_GO_KR_SERVICE_KEY`, `PSIS_API_KEY`를 넣는다.
+1. `.env.local`에 `SUPABASE_SERVICE_ROLE_KEY`, `NONGSARO_GARDEN_KEY`, `NONGSARO_DISASTER_KEY`, `DATA_GO_KR_SERVICE_KEY`, `PSIS_API_KEY`를 넣는다.
 2. `npm run collect` — 부록 A 85종 시드 → 텃밭가꾸기 원문 추출 → 비료 처방 → 농약안전사용지침 → 재해예방 문구.
    API 호출 사이 0.7초 지연, 실패 시 3회 재시도 (`COLLECT_INTERVAL_MS`로 조정).
 3. 결과는 모두 `draft`로 저장되고 `missing_report.md`가 생성된다.

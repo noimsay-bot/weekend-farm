@@ -187,10 +187,10 @@ export async function runForAllFarms(db: SupabaseClient, today: string, hourKst:
   const { data: farms, error } = await db.from("farms").select("id, name, lat, lng, region, nearest_station_id");
   if (error) throw error;
   const report: Record<string, unknown>[] = [];
-  const nongsaroKey = process.env.NONGSARO_API_KEY;
-  if (mode === "daily" && nongsaroKey) {
+  const weeklyKey = process.env.NONGSARO_WEEKLY_KEY;
+  if (mode === "daily" && weeklyKey) {
     try {
-      report.push({ weeklyFarmInfo: await collectWeeklyFarmInfo(db, nongsaroKey, today) });
+      report.push({ weeklyFarmInfo: await collectWeeklyFarmInfo(db, weeklyKey, today) });
     } catch (e) {
       report.push({ weeklyFarmInfo: (e as Error).message });
     }
