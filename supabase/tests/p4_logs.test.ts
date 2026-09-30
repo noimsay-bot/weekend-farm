@@ -94,6 +94,15 @@ describe("complete_task", () => {
   });
 });
 
+describe("realtime", () => {
+  it("publishes tasks and work_logs for the dashboard", async () => {
+    const { rows } = await db.query<{ tablename: string }>(
+      "select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by tablename",
+    );
+    expect(rows.map((r) => r.tablename)).toEqual(["tasks", "work_logs"]);
+  });
+});
+
 describe("active_plan_crops", () => {
   it("lists main crops with active plantings and companions following them", async () => {
     const rows = await asUser<{ crop_name: string; is_companion: boolean }>(

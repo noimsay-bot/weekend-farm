@@ -4,13 +4,13 @@
 
 ## 현재 상태
 - 지시서 P0~P10 코드 완료, `main`에 push, Vercel 배포됨 (https://weekend-farm.vercel.app).
-- Supabase 마이그레이션 P0~P5 모두 적용됨.
+- Supabase 마이그레이션 P0~P5 적용됨. **`20261002000001_realtime.sql`(대시보드 실시간 반영)은 아직 SQL Editor에서 적용 필요.**
 - Vercel 환경변수(Production): Supabase URL·publishable key, service role key, VAPID 3개, CRON_SECRET.
 - GitHub Actions secrets: `APP_URL`, `CRON_SECRET`.
 - 일일 크론 수동 실행 200 확인. 기상청 키가 없어 날씨는 아직 건너뜀.
 
 ## 남은 일
-1. API 키 발급 (사용자): 농사로 OpenAPI, 공공데이터포털(작물별 비료 표준사용량 처방, 기상청 단기예보·기상특보·ASOS 일자료), 농약안전정보시스템.
+1. API 키 발급 (2026-09-30 신청 완료, 승인 대기): 농사로 OpenAPI, 공공데이터포털(작물별 비료 표준사용량 처방, 기상청 단기예보·기상특보·ASOS 일자료), 농약안전정보시스템.
 2. 키를 `.env.local`과 Vercel env에 추가: `NONGSARO_API_KEY`, `DATA_GO_KR_SERVICE_KEY`, `PSIS_API_KEY`(수집 스크립트 전용, Vercel 불필요) → 재배포.
 3. `npm run collect` → `missing_report.md` 확인 → `/admin/crops`에서 작물 확정 (확정 작물이 없으면 계획에서 칠할 작물이 없음).
 4. 남은 이슈 목록: `docs/final-review.md` 4장.
@@ -25,6 +25,8 @@ npx vercel link --yes --project weekend-farm
 npx vercel env pull --environment=production .env.local
 npm test
 ```
+- `env pull`은 Sensitive 변수(service role key, VAPID, CRON_SECRET)를 `[SENSITIVE]`로만 받는다. `SUPABASE_SERVICE_ROLE_KEY`는 Supabase 대시보드 > Project Settings > API Keys에서 복사해 넣는다.
+- 농사로 OpenAPI는 개발 구분 '기타'로 신청 (서버에서 호출하므로 웹 도메인 제한을 피함).
 - `.env.local`은 Git에 없다 (공개 저장소). 위 `env pull`로 받거나 원래 컴퓨터에서 직접 옮긴다. API 키는 발급 후 추가.
 
 ## 작업 규칙 (사용자 결정)

@@ -7,6 +7,7 @@ import { BADGE_LABEL, type Badge } from "@/lib/dashboard/badges";
 import { formatKDate } from "@/lib/dates";
 import { SEASON_LABEL, type PlanSeason } from "@/lib/season";
 import { gridWidth } from "@/lib/grid-fit";
+import { createClient } from "@/lib/supabase/client";
 import type { DashboardData, DashPlanting } from "./load";
 import { BadgeSheet } from "./BadgeSheet";
 
@@ -38,6 +39,26 @@ export function Dashboard({ data }: { data: DashboardData }) {
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [router]);
+
+  // 화면을 켜 둔 채로도 작업·기록 변경을 바로 반영한다 (여러 건이 몰려도 한 번만 다시 불러옴)
+  useEffect(() => {
+    const supabase = createClient();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => router.refresh(), 500);
+    };
+    const filter = `farm_id=eq.${data.farmId}`;
+    const channel = supabase
+      .channel(`dashboard:${data.farmId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "work_logs", filter }, refresh)
+      .subscribe();
+    return () => {
+      clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [router, data.farmId]);
 
   const cellOwner = useMemo(() => {
     const m = new Map<string, DashPlanting>();
