@@ -20,8 +20,18 @@ export async function getText(url: string): Promise<string> {
       const res = await fetch(url, { headers: { "User-Agent": "weekend-farm-collector/1.0" } });
       if (res.status === 429 || res.status >= 500) throw new Error(`HTTP ${res.status}`);
       if (!res.ok) throw new Error(`HTTP ${res.status} ${url.replace(/(apiKey|serviceKey)=[^&]+/, "$1=***")}`);
-      return await res.text();
+      const text = await res.text();
+      // 공공데이터포털 게이트웨이 오류는 HTTP 200으로 온다. 빈 결과로 오인하지 않도록 구분한다.
+      const gateway = text.match(/<returnReasonCode>(\d+)<\/returnReasonCode>/);
+      if (gateway) {
+        const msg = `공공데이터포털 오류 ${gateway[1]}: ${text.match(/<returnAuthMsg>([^<]*)/)?.[1] ?? ""}`;
+        // 22: 일일 트래픽 초과, 23: 초당 요청 초과 → 23만 재시도
+        if (gateway[1] === "23") throw new Error(msg);
+        throw Object.assign(new Error(msg), { fatal: true });
+      }
+      return text;
     } catch (e) {
+      if ((e as { fatal?: boolean }).fatal) throw e;
       error = e;
       await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
     }

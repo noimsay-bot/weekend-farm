@@ -31,7 +31,7 @@ export async function listGardenArticles(apiKey: string): Promise<GardenArticle[
 
 // 상세 본문: 명세상 필드명이 서비스마다 달라 HTML이 담긴 가장 긴 필드를 본문으로 본다.
 export async function getGardenArticle(apiKey: string, cntntsNo: string): Promise<{ text: string; url: string }> {
-  const url = `${NONGSARO}/fildMnfct/fildMnfctDtl?apiKey=${apiKey}&cntntsNo=${cntntsNo}`;
+  const url = `${NONGSARO}/fildMnfct/fildMnfctView?apiKey=${apiKey}&cntntsNo=${cntntsNo}`;
   const doc = parseXml(await getText(url));
   assertNongsaroOk(doc);
   const item = xmlItems(doc)[0] ?? {};
@@ -61,32 +61,44 @@ export const FERT_SOURCE_URL = "https://www.data.go.kr/data/15075889/openapi.do"
 
 const n = (v: unknown) => (v === undefined || v === null || v === "" ? null : Number(v));
 
-// 작물코드표가 API로 제공되지 않아 코드를 순회한다. 연속으로 비면 멈춘다.
-export async function listFertilizerStandards(serviceKey: string, maxCode = 400): Promise<FertilizerStandard[]> {
+// 작물코드는 분류 2자리 + 번호 3자리 (예: 01018 콩, 07005 배추). 코드표가 API로 제공되지 않아 순회한다.
+// 텃밭 작물이 있는 분류만 본다: 01 맥류·두류·잡곡, 02 유지류, 03 서류, 04 과채, 05 근채, 06 양념채소, 07 엽채, 08 산채.
+// (00 벼, 09 과수, 10 약용, 11 화훼, 12 사료, 13 특용은 제외.) 번호 앞쪽이 비기도 해서(04003부터 시작) 연속 30개가 비면 다음 분류로.
+const FERT_CATEGORIES = ["01", "02", "03", "04", "05", "06", "07", "08"];
+
+export async function listFertilizerStandards(serviceKey: string, maxSeq = 200): Promise<FertilizerStandard[]> {
   const out: FertilizerStandard[] = [];
-  let emptyRun = 0;
-  for (let code = 1; code <= maxCode && emptyRun < 60; code++) {
-    const c = String(code).padStart(5, "0");
-    const url = `${FERT_URL}?serviceKey=${encodeURIComponent(serviceKey)}&fstd_Crop_Code=${c}`;
-    const items = xmlItems(parseXml(await getText(url)));
-    if (items.length === 0) {
-      emptyRun++;
-      continue;
+  for (const category of FERT_CATEGORIES) {
+    let emptyRun = 0;
+    for (let seq = 1; seq <= maxSeq && emptyRun < 30; seq++) {
+      const c = category + String(seq).padStart(3, "0");
+      const std = await getFertilizerStandard(serviceKey, c);
+      if (!std) {
+        emptyRun++;
+        continue;
+      }
+      emptyRun = 0;
+      out.push(std);
     }
-    emptyRun = 0;
-    const i = items[0];
-    out.push({
-      code: c,
-      name: String(i.fstd_Crop_Nm ?? ""),
-      preN: n(i.pre_Fert_N),
-      preP: n(i.pre_Fert_P),
-      preK: n(i.pre_Fert_K),
-      postN: n(i.post_Fert_N),
-      postP: n(i.post_Fert_P),
-      postK: n(i.post_Fert_K),
-    });
   }
   return out;
+}
+
+async function getFertilizerStandard(serviceKey: string, c: string): Promise<FertilizerStandard | null> {
+  const url = `${FERT_URL}?serviceKey=${encodeURIComponent(serviceKey)}&fstd_Crop_Code=${c}`;
+  const items = xmlItems(parseXml(await getText(url)));
+  if (items.length === 0) return null;
+  const i = items[0];
+  return {
+    code: c,
+    name: String(i.fstd_Crop_Nm ?? ""),
+    preN: n(i.pre_Fert_N),
+    preP: n(i.pre_Fert_P),
+    preK: n(i.pre_Fert_K),
+    postN: n(i.post_Fert_N),
+    postP: n(i.post_Fert_P),
+    postK: n(i.post_Fert_K),
+  };
 }
 
 // ── 농약안전사용지침 (psis.rda.go.kr/openApi/service.do) ──
