@@ -43,3 +43,6 @@ next-env.d.ts
 supabase/apply-*.sql
 
 .vercel
+
+# npm run collect 결과 (실행할 때마다 바뀜)
+missing_report.md

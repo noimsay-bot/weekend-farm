@@ -12,6 +12,7 @@ import { extractGarden, type GardenExtraction } from "./extract";
 import { fertilizerRows, pickFertilizerStandard } from "./fertilizer";
 import { preventionFromText } from "./prevention";
 import {
+  FERT_SOURCE_URL,
   PSIS_SOURCE_URL,
   getGardenArticle,
   listFertilizerStandards,
@@ -234,6 +235,14 @@ async function main() {
     const name = cropById.get(s.crop_id);
     if (!name) continue;
     reports.get(name)!.notes.push(s);
+  }
+  // 비료 처방 여부도 DB 기준 (이번 실행에서 비료 단계를 건너뛰어도 기존 데이터를 반영)
+  const fertRows = (await must(
+    db.from("crop_fertilizer_schedules").select("crop_id").eq("source_url", FERT_SOURCE_URL),
+  )) as { crop_id: string }[];
+  for (const f of fertRows) {
+    const name = cropById.get(f.crop_id);
+    if (name) reports.get(name)!.fertilizer = true;
   }
   const report = buildMissingReport([...reports.values()], REQUIRED_CROP_FIELDS, skipped);
   writeFileSync("missing_report.md", report);
