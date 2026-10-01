@@ -1,6 +1,8 @@
 "use client";
 
-// 구획 기반 계획 편집기. '구획' 탭에서 두둑·네모 밭을 만들고(끌기·숫자), '심기' 탭에서 구획에 작물을 몇 줄로 심는다.
+// 구획 기반 계획 편집기.
+// '두둑 추가'를 누르면 떠 있는 상자가 나오고, 끌어 옮기고 크기를 맞춘 뒤 '확인'을 누르면 그 자리에 고정된다.
+// 고정된 구획을 누르면 작물을 고르고(포기 간격대로 자동 배정), 몇 줄·줄뿌림/점뿌림 등을 정한다.
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -53,7 +55,7 @@ export function rowsFor(bed: Bed, method: SowPattern, s: Sowing | undefined, cur
   return current;
 }
 
-type Mode = "layout" | "plant";
+const NEW_BED = "new";
 
 export function BedPlanEditor({ data }: { data: BedEditorData }) {
   const widthCm = Math.round(data.widthM * 100);
@@ -68,7 +70,7 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
   const [status, setStatus] = useState(data.plan.status);
   const [approvedIds, setApprovedIds] = useState(data.approvedIds);
   const [warnings, setWarnings] = useState<RotationWarning[]>(data.warnings);
-  const [mode, setMode] = useState<Mode>(data.beds.length ? "plant" : "layout");
+  const [floating, setFloating] = useState<Bed | null>(null);
   const [bedId, setBedId] = useState<string | null>(null);
   const [bpId, setBpId] = useState<string | null>(null);
   const [picker, setPicker] = useState<"new" | "change" | null>(null);
@@ -120,32 +122,45 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
     return { x: 0, y: 0 };
   }
 
-  async function addBed(kind: Bed["kind"], rect?: Partial<Bed>) {
+  // 새 상자를 빈 곳에 띄운다 (아직 저장하지 않음)
+  function openNew(kind: Bed["kind"], rect?: Partial<Bed>) {
     const w = Math.min(rect?.w_cm ?? (kind === "bed" ? 80 : 120), widthCm);
     const h = Math.min(rect?.h_cm ?? (kind === "bed" ? 300 : 120), heightCm);
     const spot = rect?.x_cm !== undefined && rect?.y_cm !== undefined ? { x: rect.x_cm, y: rect.y_cm } : freeSpot(w, h);
-    await run(
+    setBedId(null);
+    setBpId(null);
+    setFloating({ id: NEW_BED, kind, x_cm: spot.x, y_cm: spot.y, w_cm: w, h_cm: h, label: null });
+  }
+
+  function clampBed(next: Bed): Bed {
+    const w = Math.max(10, Math.min(next.w_cm, widthCm));
+    const h = Math.max(10, Math.min(next.h_cm, heightCm));
+    return { ...next, w_cm: w, h_cm: h, x_cm: Math.max(0, Math.min(next.x_cm, widthCm - w)), y_cm: Math.max(0, Math.min(next.y_cm, heightCm - h)) };
+  }
+
+  // '확인': 떠 있는 상자를 그 자리에 고정한다
+  async function confirmFloating() {
+    if (!floating) return;
+    const b = clampBed(floating);
+    if (b.id !== NEW_BED) {
+      await saveBed(b);
+      setFloating(null);
+      return;
+    }
+    const ok = await run(
       () =>
         createClient()
           .from("field_beds")
-          .insert({ farm_id: data.plan.farmId, kind, x_cm: spot.x, y_cm: spot.y, w_cm: w, h_cm: h })
+          .insert({ farm_id: data.plan.farmId, kind: b.kind, x_cm: b.x_cm, y_cm: b.y_cm, w_cm: b.w_cm, h_cm: b.h_cm })
           .select("id, kind, x_cm, y_cm, w_cm, h_cm, label")
           .single(),
-      (row) => {
-        setBeds((bs) => [...bs, row as Bed]);
-        setBedId((row as Bed).id);
-      },
+      (row) => setBeds((bs) => [...bs, row as Bed]),
     );
+    if (ok) setFloating(null);
   }
 
   async function saveBed(next: Bed) {
-    const clamped = {
-      ...next,
-      w_cm: Math.max(10, Math.min(next.w_cm, widthCm)),
-      h_cm: Math.max(10, Math.min(next.h_cm, heightCm)),
-    };
-    clamped.x_cm = Math.max(0, Math.min(clamped.x_cm, widthCm - clamped.w_cm));
-    clamped.y_cm = Math.max(0, Math.min(clamped.y_cm, heightCm - clamped.h_cm));
+    const clamped = clampBed(next);
     setBeds((bs) => bs.map((b) => (b.id === clamped.id ? clamped : b)));
     await run(
       () =>
@@ -158,12 +173,13 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
     );
   }
 
-  async function duplicate(dir: "right" | "down", gap: number) {
+  // 같은 크기 상자를 고랑 폭만큼 떨어진 곳에 띄운다 (확인을 눌러야 고정)
+  function duplicate(dir: "right" | "down", gap: number) {
     if (!bed) return;
     const x = dir === "right" ? bed.x_cm + bed.w_cm + gap : bed.x_cm;
     const y = dir === "down" ? bed.y_cm + bed.h_cm + gap : bed.y_cm;
     if (x + bed.w_cm > widthCm || y + bed.h_cm > heightCm) return setError("밭 밖으로 나가요. 간격이나 크기를 줄여 주세요.");
-    await addBed(bed.kind, { x_cm: x, y_cm: y, w_cm: bed.w_cm, h_cm: bed.h_cm });
+    openNew(bed.kind, { x_cm: x, y_cm: y, w_cm: bed.w_cm, h_cm: bed.h_cm });
   }
 
   async function removeBed() {
@@ -265,30 +281,13 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 rounded-xl bg-[#f0f0ee] p-1 text-sm">
-        {(
-          [
-            ["plant", "심기"],
-            ["layout", "구획 만들기"],
-          ] as [Mode, string][]
-        ).map(([m, label]) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={`h-9 rounded-lg font-medium ${mode === m ? "bg-white shadow-sm" : "text-muted"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {mode === "layout" && (
+      {!floating && (
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={() => addBed("bed")} disabled={busy} className="h-11 rounded-xl border border-line bg-white text-sm font-medium">
-            + 두둑
+          <button onClick={() => openNew("bed")} disabled={busy} className="h-11 rounded-xl border border-line bg-white text-sm font-medium">
+            + 두둑 추가
           </button>
-          <button onClick={() => addBed("plot")} disabled={busy} className="h-11 rounded-xl border border-line bg-white text-sm font-medium">
-            + 네모 밭
+          <button onClick={() => openNew("plot")} disabled={busy} className="h-11 rounded-xl border border-line bg-white text-sm font-medium">
+            + 네모 밭 추가
           </button>
         </div>
       )}
@@ -303,26 +302,42 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
           spacingOf={spacingOf}
           warned={warned}
           selectedBedId={bedId}
-          mode={mode}
+          mode="plant"
+          floating={floating}
+          onFloatingChange={setFloating}
           onSelectBed={(id) => {
+            if (floating) return;
             setBedId(id);
-            if (!id) setBpId(null);
+            setBpId(null);
+            if (!id) return;
+            // 빈 구획을 누르면 바로 작물 고르기, 심은 게 있으면 첫 작물을 연다
+            const first = bps.find((p) => p.bed_id === id);
+            if (first) setBpId(first.id);
+            else if (editable) setPicker("new");
           }}
-          onSelectPlanting={setBpId}
-          onBedChange={saveBed}
+          onSelectPlanting={(id) => !floating && setBpId(id)}
         />
         <p className="px-1 pt-2 text-xs text-muted">
           {data.widthM}×{data.heightM}m · 눈금 1m
-          {mode === "layout" ? " · 구획을 끌어 옮기고 초록 손잡이로 크기를 바꿔요" : " · 구획을 눌러 작물을 심어요"}
+          {floating ? " · 상자를 끌어 옮기고 초록 손잡이로 크기를 맞춘 뒤 확인" : " · 구획을 눌러 작물을 심어요"}
           {busy && " · 저장 중…"}
         </p>
       </div>
-      {beds.length === 0 && <p className="text-sm text-muted">먼저 구획 만들기에서 두둑이나 네모 밭을 추가하세요.</p>}
+      {beds.length === 0 && !floating && <p className="text-sm text-muted">&lsquo;두둑 추가&rsquo;를 눌러 첫 두둑을 놓아 보세요.</p>}
       <ErrorText>{error}</ErrorText>
 
-      {mode === "layout" && bed && <BedPanel bed={bed} onSave={saveBed} onDuplicate={duplicate} onRemove={removeBed} busy={busy} />}
+      {floating && (
+        <FloatingPanel
+          bed={floating}
+          isNew={floating.id === NEW_BED}
+          busy={busy}
+          onChange={(b) => setFloating(clampBed(b))}
+          onCancel={() => setFloating(null)}
+          onConfirm={confirmFloating}
+        />
+      )}
 
-      {mode === "plant" && bed && (
+      {!floating && bed && (
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
           <div className="flex items-baseline justify-between">
             <h2 className="font-semibold">
@@ -364,6 +379,7 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
               onRemove={removePlanting}
             />
           )}
+          <BedActions onEdit={() => setFloating({ ...bed })} onDuplicate={duplicate} onRemove={removeBed} busy={busy} />
         </section>
       )}
 
@@ -468,58 +484,91 @@ function NumberField({ label, value, onCommit, suffix = "cm", disabled = false }
   );
 }
 
-function BedPanel({
+// 떠 있는 상자: 숫자로 다듬고 확인을 눌러 고정한다
+function FloatingPanel({
   bed,
-  onSave,
-  onDuplicate,
-  onRemove,
+  isNew,
   busy,
+  onChange,
+  onCancel,
+  onConfirm,
 }: {
   bed: Bed;
-  onSave: (b: Bed) => void;
-  onDuplicate: (dir: "right" | "down", gap: number) => void;
-  onRemove: () => void;
+  isNew: boolean;
   busy: boolean;
+  onChange: (b: Bed) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
 }) {
-  const [gap, setGap] = useState(40);
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+    <section className="flex flex-col gap-3 rounded-2xl border border-primary-line bg-white p-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">{bed.kind === "plot" ? "네모 밭" : "두둑"}</h2>
+        <h2 className="font-semibold">{isNew ? "새 구획 놓기" : "구획 옮기기"}</h2>
         <div className="flex rounded-lg bg-[#f0f0ee] p-0.5 text-xs">
           {(["bed", "plot"] as const).map((k) => (
-            <button key={k} onClick={() => onSave({ ...bed, kind: k })} className={`h-7 rounded-md px-3 ${bed.kind === k ? "bg-white shadow-sm" : "text-muted"}`}>
+            <button key={k} onClick={() => onChange({ ...bed, kind: k })} className={`h-7 rounded-md px-3 ${bed.kind === k ? "bg-white shadow-sm" : "text-muted"}`}>
               {k === "bed" ? "두둑" : "네모 밭"}
             </button>
           ))}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <NumberField label="가로" value={bed.w_cm} onCommit={(v) => onSave({ ...bed, w_cm: v })} />
-        <NumberField label="세로" value={bed.h_cm} onCommit={(v) => onSave({ ...bed, h_cm: v })} />
-        <NumberField label="왼쪽에서" value={bed.x_cm} onCommit={(v) => onSave({ ...bed, x_cm: v })} />
-        <NumberField label="위에서" value={bed.y_cm} onCommit={(v) => onSave({ ...bed, y_cm: v })} />
+        <NumberField key={`w${bed.w_cm}`} label="가로" value={bed.w_cm} onCommit={(v) => onChange({ ...bed, w_cm: v })} />
+        <NumberField key={`h${bed.h_cm}`} label="세로" value={bed.h_cm} onCommit={(v) => onChange({ ...bed, h_cm: v })} />
+        <NumberField key={`x${bed.x_cm}`} label="왼쪽에서" value={bed.x_cm} onCommit={(v) => onChange({ ...bed, x_cm: v })} />
+        <NumberField key={`y${bed.y_cm}`} label="위에서" value={bed.y_cm} onCommit={(v) => onChange({ ...bed, y_cm: v })} />
       </div>
-      <div className="flex items-end gap-2">
-        <div className="w-24">
-          <NumberField label="고랑 폭" value={gap} onCommit={setGap} />
+      <button onClick={() => onChange({ ...bed, w_cm: bed.h_cm, h_cm: bed.w_cm })} className="h-10 rounded-lg border border-line text-sm">
+        가로·세로 돌리기
+      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>
+          취소
+        </Button>
+        <Button onClick={onConfirm} disabled={busy}>
+          {busy ? "저장 중…" : "확인"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+// 고정된 구획: 옮기기·복제·지우기
+function BedActions({
+  onEdit,
+  onDuplicate,
+  onRemove,
+  busy,
+}: {
+  onEdit: () => void;
+  onDuplicate: (dir: "right" | "down", gap: number) => void;
+  onRemove: () => void;
+  busy: boolean;
+}) {
+  const [gap, setGap] = useState(40);
+  return (
+    <details className="border-t border-line pt-3 text-sm">
+      <summary className="cursor-pointer text-muted">구획 옮기기·복제·지우기</summary>
+      <div className="mt-3 flex flex-col gap-2">
+        <button disabled={busy} onClick={onEdit} className="h-10 rounded-lg border border-line">
+          위치·크기 바꾸기
+        </button>
+        <div className="flex items-end gap-2">
+          <div className="w-24">
+            <NumberField label="고랑 폭" value={gap} onCommit={setGap} />
+          </div>
+          <button disabled={busy} onClick={() => onDuplicate("right", gap)} className="h-10 flex-1 rounded-lg border border-line">
+            오른쪽에 복제
+          </button>
+          <button disabled={busy} onClick={() => onDuplicate("down", gap)} className="h-10 flex-1 rounded-lg border border-line">
+            아래에 복제
+          </button>
         </div>
-        <button disabled={busy} onClick={() => onDuplicate("right", gap)} className="h-10 flex-1 rounded-lg border border-line text-sm">
-          오른쪽에 복제
-        </button>
-        <button disabled={busy} onClick={() => onDuplicate("down", gap)} className="h-10 flex-1 rounded-lg border border-line text-sm">
-          아래에 복제
-        </button>
-      </div>
-      <div className="flex gap-2">
-        <button disabled={busy} onClick={() => onSave({ ...bed, w_cm: bed.h_cm, h_cm: bed.w_cm })} className="h-10 flex-1 rounded-lg border border-line text-sm">
-          가로·세로 돌리기
-        </button>
-        <button disabled={busy} onClick={onRemove} className="h-10 flex-1 rounded-lg border border-danger-line text-sm text-danger">
+        <button disabled={busy} onClick={onRemove} className="h-10 rounded-lg border border-danger-line text-danger">
           구획 지우기
         </button>
       </div>
-    </section>
+    </details>
   );
 }
 

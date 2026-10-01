@@ -1,7 +1,8 @@
 "use client";
 
 // 밭 그림: 흙(고랑) 위에 두둑·네모 밭을 놓고, 심은 작물은 포기 위치에 원으로 그린다.
-// layout 모드에서는 구획을 끌어 옮기고 오른쪽 아래 손잡이로 크기를 바꾼다 (10cm 단위).
+// 격자는 자 역할만 한다. 새로 놓거나 고치는 구획(floating)은 위에 떠 있는 상자로 그려
+// 끌어 옮기고 오른쪽 아래 손잡이로 크기를 바꾼다 (10cm 단위). 고정된 구획은 움직이지 않는다.
 import { useRef, useState } from "react";
 import { plantCountOf, plantPositions, scatterPoints, segmentRect, snap, sowLines, type Bed, type BedPlanting } from "@/lib/field/beds";
 import { toneMap } from "@/lib/field/colors";
@@ -22,6 +23,8 @@ type Props = {
   onSelectBed?: (bedId: string | null) => void;
   onSelectPlanting?: (plantingId: string) => void;
   onBedChange?: (bed: Bed) => void;
+  floating?: Bed | null; // 아직 고정하지 않은 상자
+  onFloatingChange?: (bed: Bed) => void;
 };
 
 type Drag = { id: string; kind: "move" | "resize"; startX: number; startY: number; orig: Bed };
@@ -40,6 +43,8 @@ export function FieldMap({
   onSelectBed,
   onSelectPlanting,
   onBedChange,
+  floating = null,
+  onFloatingChange,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -57,8 +62,9 @@ export function FieldMap({
 
   function startDrag(e: React.PointerEvent, bed: Bed, kind: Drag["kind"]) {
     e.stopPropagation();
-    onSelectBed?.(bed.id);
-    if (mode !== "layout") return;
+    const isFloating = floating !== null && bed.id === floating.id;
+    if (!isFloating) onSelectBed?.(bed.id);
+    if (mode !== "layout" && !isFloating) return;
     const p = toCm(e);
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     setDrag({ id: bed.id, kind, startX: p.x, startY: p.y, orig: bed });
@@ -84,17 +90,20 @@ export function FieldMap({
             h_cm: Math.min(Math.max(10, snap(o.h_cm + dy)), heightCm - o.y_cm),
           };
     setDraft(next);
+    if (floating && drag.id === floating.id) onFloatingChange?.(next);
   }
 
   function endDrag() {
-    if (drag && draft && (draft.x_cm !== drag.orig.x_cm || draft.y_cm !== drag.orig.y_cm || draft.w_cm !== drag.orig.w_cm || draft.h_cm !== drag.orig.h_cm)) {
+    if (drag && draft && !(floating && drag.id === floating.id) && (draft.x_cm !== drag.orig.x_cm || draft.y_cm !== drag.orig.y_cm || draft.w_cm !== drag.orig.w_cm || draft.h_cm !== drag.orig.h_cm)) {
       onBedChange?.(draft);
     }
     setDrag(null);
     setDraft(null);
   }
 
-  const shown = beds.map((b) => (draft && b.id === draft.id ? draft : b));
+  // 고치는 중인 구획은 원래 자리에서 빼고 떠 있는 상자로만 그린다
+  const shown = beds.filter((b) => !floating || b.id !== floating.id).map((b) => (draft && b.id === draft.id ? draft : b));
+  const box = floating ? (draft && draft.id === floating.id ? draft : floating) : null;
   const bedById = new Map(shown.map((b) => [b.id, b]));
   const tones = toneMap(plantings.map((p) => p.crop_id));
 
@@ -103,11 +112,11 @@ export function FieldMap({
       ref={svgRef}
       viewBox={`0 0 ${widthCm} ${heightCm}`}
       className="block w-full select-none"
-      style={{ aspectRatio: `${widthCm} / ${heightCm}`, touchAction: mode === "layout" ? "none" : "auto" }}
+      style={{ aspectRatio: `${widthCm} / ${heightCm}`, touchAction: mode === "layout" || floating ? "none" : "auto" }}
       onPointerMove={onMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      onPointerDown={() => onSelectBed?.(null)}
+      onPointerDown={() => !floating && onSelectBed?.(null)}
     >
       <rect x={0} y={0} width={widthCm} height={heightCm} rx={unit * 0.8} fill="var(--soil)" />
       {/* 1m 눈금 */}
@@ -116,6 +125,17 @@ export function FieldMap({
       ))}
       {Array.from({ length: Math.floor(heightCm / 100) }, (_, i) => (
         <line key={`hy${i}`} x1={0} y1={(i + 1) * 100} x2={widthCm} y2={(i + 1) * 100} stroke="#e7e1d1" strokeWidth={unit * 0.08} />
+      ))}
+      {/* 자 눈금 (m) */}
+      {Array.from({ length: Math.floor((widthCm - 1) / 100) }, (_, i) => (
+        <text key={`rx${i}`} x={(i + 1) * 100} y={unit * 1.2} fontSize={unit * 0.9} textAnchor="middle" fill="#b9ae93" pointerEvents="none">
+          {i + 1}m
+        </text>
+      ))}
+      {Array.from({ length: Math.floor((heightCm - 1) / 100) }, (_, i) => (
+        <text key={`ry${i}`} x={unit * 0.4} y={(i + 1) * 100} fontSize={unit * 0.9} dominantBaseline="central" fill="#b9ae93" pointerEvents="none">
+          {i + 1}m
+        </text>
       ))}
 
       {shown.map((b) => {
@@ -245,6 +265,50 @@ export function FieldMap({
               </text>
             </g>
           ))}
+
+      {box && (
+        <g>
+          <rect
+            x={box.x_cm}
+            y={box.y_cm}
+            width={box.w_cm}
+            height={box.h_cm}
+            rx={Math.min(box.w_cm, box.h_cm) * 0.12}
+            fill="var(--primary)"
+            fillOpacity={0.18}
+            stroke="var(--primary)"
+            strokeWidth={unit * 0.3}
+            strokeDasharray={`${unit * 0.8} ${unit * 0.5}`}
+            style={{ cursor: "move" }}
+            onPointerDown={(e) => startDrag(e, box, "move")}
+          />
+          <text
+            x={box.x_cm + box.w_cm / 2}
+            y={box.y_cm + box.h_cm / 2}
+            fontSize={Math.min(unit * 1.2, Math.min(box.w_cm, box.h_cm) * 0.35)}
+            fontWeight={600}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="var(--primary)"
+            stroke="#ffffff"
+            strokeWidth={unit * 0.3}
+            paintOrder="stroke"
+            pointerEvents="none"
+          >
+            {box.w_cm}×{box.h_cm}cm
+          </text>
+          <circle
+            cx={box.x_cm + box.w_cm}
+            cy={box.y_cm + box.h_cm}
+            r={unit * 1.4}
+            fill="var(--primary)"
+            stroke="#ffffff"
+            strokeWidth={unit * 0.3}
+            style={{ cursor: "nwse-resize" }}
+            onPointerDown={(e) => startDrag(e, box, "resize")}
+          />
+        </g>
+      )}
     </svg>
   );
 }
