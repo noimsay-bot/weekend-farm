@@ -148,31 +148,3 @@ export async function listPesticideUses(apiKey: string, cropName: string): Promi
   return out;
 }
 
-// ── 농사로 농작물재해예방정보 (frcDsstrPrevnt): 기상특보·고온기 대응 문구 ──
-export async function listDisasterGuides(apiKey: string): Promise<{ title: string; text: string; url: string }[]> {
-  const out: { title: string; text: string; url: string }[] = [];
-  for (let page = 1; page <= 20; page++) {
-    const doc = parseXml(
-      await getText(`${NONGSARO}/frcDsstrPrevnt/frcDsstrPrevntList?apiKey=${apiKey}&pageNo=${page}&numOfRows=50`),
-    );
-    assertNongsaroOk(doc);
-    const items = xmlItems(doc);
-    for (const item of items) {
-      const no = String(item.cntntsNo ?? "");
-      const title = String(item.cntntsSj ?? item.sj ?? "");
-      if (!no || !title) continue;
-      const detail = parseXml(await getText(`${NONGSARO}/frcDsstrPrevnt/frcDsstrPrevntDtl?apiKey=${apiKey}&cntntsNo=${no}`));
-      assertNongsaroOk(detail);
-      const body = Object.values(xmlItems(detail)[0] ?? {})
-        .map((v) => String(v ?? ""))
-        .sort((a, b) => b.length - a.length)[0] ?? "";
-      out.push({
-        title,
-        text: htmlToText(body),
-        url: `https://www.nongsaro.go.kr/portal/ps/psz/psza/contentSub.ps?cntntsNo=${no}`,
-      });
-    }
-    if (items.length < 50) break;
-  }
-  return out;
-}

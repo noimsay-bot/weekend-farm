@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CROP_SEEDS, cropsForTitle } from "./crop-list";
 import { extractGarden } from "./extract";
-import { fertilizerRows } from "./fertilizer";
+import { fertilizerRows, pickFertilizerStandard } from "./fertilizer";
 import { preventionFromText } from "./prevention";
 import { buildMissingReport } from "./report";
 import { REQUIRED_CROP_FIELDS } from "../../src/lib/crop-fields";
@@ -86,5 +86,17 @@ describe("missing report", () => {
     expect(md).toContain("히카마");
     expect(md).toMatch(/\| 상추 \| [^|]*과\(科\)[^|]* \| 육묘일수 \| 있음 \| 3건 \| 1건 \|/);
     expect(md).toContain("PSIS_API_KEY 없음");
+  });
+});
+
+describe("pickFertilizerStandard", () => {
+  const std = (code: string, name: string) => ({ code, name, preN: 1, preP: 1, preK: 1, postN: null, postP: null, postK: null });
+  const list = [std("07003", "양상추(평야지)"), std("07004", "배추(시설재배)"), std("07005", "배추(노지재배)"), std("04003", "고추(밀식재배)"), std("01018", "콩(기경지)")];
+
+  it("matches the name before the parenthesis and prefers open-field variants", () => {
+    expect(pickFertilizerStandard(list, ["배추"])?.code).toBe("07005");
+    expect(pickFertilizerStandard(list, ["양상추"])?.code).toBe("07003");
+    expect(pickFertilizerStandard(list, ["고추"])?.code).toBe("04003");
+    expect(pickFertilizerStandard(list, ["상추"])).toBeNull();
   });
 });

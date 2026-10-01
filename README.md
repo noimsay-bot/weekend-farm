@@ -52,8 +52,8 @@ npm run build
 
 ## 작물 데이터 수집 (P2)
 
-1. `.env.local`에 `SUPABASE_SERVICE_ROLE_KEY`, `NONGSARO_GARDEN_KEY`, `NONGSARO_DISASTER_KEY`, `DATA_GO_KR_SERVICE_KEY`, `PSIS_API_KEY`를 넣는다.
-2. `npm run collect` — 부록 A 85종 시드 → 텃밭가꾸기 원문 추출 → 비료 처방 → 농약안전사용지침 → 재해예방 문구.
+1. `.env.local`에 `SUPABASE_SERVICE_ROLE_KEY`, `NONGSARO_GARDEN_KEY`, `DATA_GO_KR_SERVICE_KEY`, `PSIS_API_KEY`를 넣는다.
+2. `npm run collect` — 부록 A 85종 시드 → 텃밭가꾸기 원문 추출 → 비료 처방 → 농약안전사용지침. (농작물재해예방정보는 .hwp 첨부만 있어 수집하지 않는다.)
    API 호출 사이 0.7초 지연, 실패 시 3회 재시도 (`COLLECT_INTERVAL_MS`로 조정).
 3. 결과는 모두 `draft`로 저장되고 `missing_report.md`가 생성된다.
 4. 앱에서 `/admin/crops` → 필드별로 근거 원문을 보고 **추출값 승인** 또는 **직접 입력** → 모두 끝나면 **확정**.

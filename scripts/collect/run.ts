@@ -2,7 +2,6 @@
 // 필요한 환경변수(.env.local):
 //   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  (필수)
 //   NONGSARO_GARDEN_KEY     농사로 OpenAPI 텃밭가꾸기 정보 (fildMnfct)
-//   NONGSARO_DISASTER_KEY   농사로 OpenAPI 농작물재해예방정보 (frcDsstrPrevnt)
 //   DATA_GO_KR_SERVICE_KEY  공공데이터포털 (비료 표준사용량 처방)
 //   PSIS_API_KEY            농약안전정보시스템 (농약안전사용지침)
 // 키가 없는 소스는 건너뛰고 missing_report.md에 적는다.
@@ -10,13 +9,11 @@ import { writeFileSync } from "node:fs";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { CROP_SEEDS, cropsForTitle } from "./crop-list";
 import { extractGarden, type GardenExtraction } from "./extract";
-import { fertilizerRows } from "./fertilizer";
-import { guidesFromArticle } from "./guides";
+import { fertilizerRows, pickFertilizerStandard } from "./fertilizer";
 import { preventionFromText } from "./prevention";
 import {
   PSIS_SOURCE_URL,
   getGardenArticle,
-  listDisasterGuides,
   listFertilizerStandards,
   listGardenArticles,
   listPesticideUses,
@@ -96,10 +93,14 @@ async function saveGarden(db: SupabaseClient, crop: CropRow, ex: GardenExtractio
   await must(db.from("crops").update(update).eq("id", crop.id));
   if (sources.length) await must(db.from("crop_field_sources").upsert(sources, { onConflict: "crop_id,field_name" }));
 
-  if (ex.calendars.length) {
+  // 원문에 같은 작형·작업 기간이 여러 번 나오면 upsert가 한 묶음 안의 중복 키로 실패한다 → 처음 것만 쓴다
+  const firstCalendars = ex.calendars.filter(
+    (c, i) => ex.calendars.findIndex((x) => x.croppingType === c.croppingType && x.activity === c.activity) === i,
+  );
+  if (firstCalendars.length) {
     await must(
       db.from("crop_regional_calendars").upsert(
-        ex.calendars.map((c) => ({
+        firstCalendars.map((c) => ({
           crop_id: crop.id,
           region: "전국",
           cropping_type: c.croppingType,
@@ -128,19 +129,18 @@ async function main() {
   const db = createClient(url, serviceKey, { auth: { persistSession: false } });
 
   const gardenKey = env("NONGSARO_GARDEN_KEY");
-  const disasterKey = env("NONGSARO_DISASTER_KEY");
   const dataKey = env("DATA_GO_KR_SERVICE_KEY");
   const psisKey = env("PSIS_API_KEY");
   const skipped: string[] = [];
 
-  console.log("1/5 작물·품종·태그 시드");
+  console.log("1/4 작물·품종·태그 시드");
   const crops = await seedCrops(db);
   const reports = new Map<string, CropReport>(
     CROP_SEEDS.map((c) => [c.name, { name: c.name, gardenUrl: null, fertilizer: false, pesticides: 0, missingMoa: 0, notes: [] }]),
   );
   const gardenByCrop = new Map<string, { ex: GardenExtraction; url: string }>();
 
-  console.log("2/5 농사로 텃밭가꾸기");
+  console.log("2/4 농사로 텃밭가꾸기");
   if (gardenKey) {
     const articles = await listGardenArticles(gardenKey);
     for (const a of articles) {
@@ -165,12 +165,12 @@ async function main() {
     skipped.push("NONGSARO_GARDEN_KEY 없음: 텃밭가꾸기 원문 수집 건너뜀");
   }
 
-  console.log("3/5 비료 표준사용량 처방");
+  console.log("3/4 비료 표준사용량 처방");
   if (dataKey) {
     const standards = await listFertilizerStandards(dataKey);
     for (const seed of CROP_SEEDS) {
       const names = [seed.name, ...(seed.aliases ?? [])];
-      const std = standards.find((s) => names.includes(s.name.trim())) ?? null;
+      const std = pickFertilizerStandard(standards, names);
       const garden = gardenByCrop.get(seed.name);
       const rows = fertilizerRows(crops.get(seed.name)!.id, std, garden?.ex.fertilizers ?? [], garden?.url ?? null);
       if (!rows.length) continue;
@@ -182,7 +182,7 @@ async function main() {
     skipped.push("DATA_GO_KR_SERVICE_KEY 없음: 비료 처방 수집 건너뜀");
   }
 
-  console.log("4/5 농약안전사용지침");
+  console.log("4/4 농약안전사용지침");
   if (psisKey) {
     for (const seed of CROP_SEEDS) {
       const crop = crops.get(seed.name)!;
@@ -215,21 +215,9 @@ async function main() {
     skipped.push("PSIS_API_KEY 없음: 농약안전사용지침 수집 건너뜀");
   }
 
-  console.log("5/5 농작물재해예방정보 (기상특보 대응 문구)");
-  if (disasterKey) {
-    try {
-      const guides = (await listDisasterGuides(disasterKey)).flatMap((a) => guidesFromArticle(a.title, a.text, a.url));
-      if (guides.length) {
-        await must(db.from("weather_response_guides").delete().is("crop_id", null));
-        await must(db.from("weather_response_guides").insert(guides));
-      }
-      if (guides.length === 0) skipped.push("농작물재해예방정보: 대응 문구를 찾지 못함");
-    } catch (e) {
-      skipped.push(`농작물재해예방정보 수집 실패: ${(e as Error).message}`);
-    }
-  } else {
-    skipped.push("NONGSARO_DISASTER_KEY 없음: 농작물재해예방정보 수집 건너뜀");
-  }
+  // 농작물재해예방정보(frcDsstrPrevnt)는 본문 없이 호별 .hwp 첨부만 제공해 대응 문구를 자동으로 뽑을 수 없다.
+  // 특보 알림은 대응 문구 없이 나가며, 문구는 weather_response_guides에 관리자가 직접 넣는다.
+  skipped.push("농작물재해예방정보: API가 .hwp 첨부파일만 제공해 기상특보 대응 문구는 수집하지 않음 (관리자 입력)");
 
   // 누락 리포트: DB의 현재 상태 기준
   const sourceRows = (await must(

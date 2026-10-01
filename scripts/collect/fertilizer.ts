@@ -1,6 +1,16 @@
 import type { FertilizerExtraction } from "./extract";
 import { FERT_SOURCE_URL, type FertilizerStandard } from "./sources";
 
+// 처방 API 작물명은 '배추(노지재배)'처럼 재배형이 괄호로 붙는다. 괄호 앞 이름으로 맞추고,
+// 여러 개면 정확히 같은 이름 → 노지 → 평야지 → 코드 순으로 고른다 (텃밭은 노지·평야 기준).
+export function pickFertilizerStandard(standards: FertilizerStandard[], names: string[]): FertilizerStandard | null {
+  const base = (s: string) => s.replace(/\(.*$/, "").trim();
+  const matches = standards.filter((s) => names.includes(base(s.name)));
+  const rank = (s: FertilizerStandard) =>
+    names.includes(s.name.trim()) ? 0 : s.name.includes("노지") ? 1 : s.name.includes("평야지") ? 2 : 3;
+  return [...matches].sort((a, b) => rank(a) - rank(b) || a.code.localeCompare(b.code))[0] ?? null;
+}
+
 // 비료: 성분량(N·P·K)은 처방 API, 퇴비·석회와 추비 시기는 텃밭 원문.
 // 웃거름 성분은 원문 추비 회차별 요소량 비율로 나누고, 비율이 없으면 균등 분배한다.
 export function fertilizerRows(
