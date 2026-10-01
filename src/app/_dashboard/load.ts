@@ -10,6 +10,7 @@ import { getWeeklyWindows } from "@/lib/weather/load";
 import { toDaily } from "@/lib/weather/recommend";
 import { nearest, WARNING_OFFICES } from "@/lib/weather/stations";
 import type { WeeklyItem } from "@/lib/weather/timing";
+import type { Bed, BedPlanting } from "@/lib/field/beds";
 
 const ORDER: Record<string, number> = { spring: 0, autumn: 1, overwinter: 2 };
 
@@ -21,6 +22,7 @@ export type DashPlanting = {
   plantedOn: string | null;
   plantCount: number | null;
   cells: { x: number; y: number }[];
+  bedPlantingId: string | null;
 };
 
 export type DashboardData = {
@@ -41,6 +43,8 @@ export type DashboardData = {
   pests: Record<string, { pest_name: string; ingredient_name: string; moa_code: string | null; formulation: string | null; dilution_factor: number | null; safe_days_before_harvest: number | null; max_applications: number | null; is_organic: boolean }[]>;
   products: ProductRow[];
   productSettings: { usage: string; product_id: string }[];
+  // 구획으로 그린 밭 (없으면 예전 칸 그림)
+  field: { widthCm: number; heightCm: number; beds: Bed[]; bedPlantings: BedPlanting[] } | null;
 };
 
 export async function loadDashboard(db: SupabaseClient, farmId: string, today: string): Promise<DashboardData | null> {
@@ -50,7 +54,7 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
   const { data: plantingRows } = await db
     .from("plantings")
     .select(
-      "id, plan_id, plan_crop_id, crop_id, sow_date, transplant_date, plant_count, planned_plant_count, crops(name), field_plans!inner(farm_id, status, year, season), planting_cells(field_plan_cells(x, y, plan_id))",
+      "id, plan_id, plan_crop_id, crop_id, sow_date, transplant_date, plant_count, planned_plant_count, bed_planting_id, crops(name), field_plans!inner(farm_id, status, year, season), planting_cells(field_plan_cells(x, y, plan_id))",
     )
     .eq("status", "active")
     .eq("field_plans.farm_id", farmId)
@@ -64,6 +68,7 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     transplant_date: string | null;
     plant_count: number | null;
     planned_plant_count: number | null;
+    bed_planting_id: string | null;
     crops: { name: string };
     field_plans: { year: number; season: string };
     planting_cells: { field_plan_cells: { x: number; y: number; plan_id: string } }[];
@@ -80,7 +85,7 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
 
   const { nx, ny } = toKmaGrid(farm.lat, farm.lng);
   const office = nearest(farm.lat, farm.lng, WARNING_OFFICES);
-  const [cellsRes, settingsRes, tasksRes, leadRes, activeRes, hourlyRes, alertsRes, productsRes, productSettingsRes] = await Promise.all([
+  const [cellsRes, settingsRes, tasksRes, leadRes, activeRes, hourlyRes, alertsRes, productsRes, productSettingsRes, bedsRes, bedPlantingsRes] = await Promise.all([
     db.from("field_plan_cells").select("x, y, crop_id, companion_crop_id, carry_state, carried_from_planting_id").eq("plan_id", shown.id),
     db.from("farm_settings").select("*").eq("farm_id", farmId).single(),
     db
@@ -94,6 +99,11 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     db.from("weather_alerts").select("alert_type, level, action, announced_at").eq("region_code", office.id).gte("announced_at", `${addDays(today, -1)}T00:00:00+09:00`),
     db.from("fertilizer_products").select("id, farm_id, name, n_pct, p_pct, k_pct, is_default"),
     db.from("farm_fertilizer_settings").select("usage, product_id").eq("farm_id", farmId),
+    db.from("field_beds").select("id, kind, x_cm, y_cm, w_cm, h_cm, label").eq("farm_id", farmId),
+    db
+      .from("plan_bed_plantings")
+      .select("id, bed_id, crop_id, rows, start_cm, length_cm, plant_count, carried_from_planting_id")
+      .eq("plan_id", shown.id),
   ]);
 
   const cells = cellsRes.data ?? [];
@@ -109,6 +119,7 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     cropName: r.crops.name,
     plantedOn: r.transplant_date ?? r.sow_date,
     plantCount: r.plant_count ?? r.planned_plant_count,
+    bedPlantingId: r.bed_planting_id,
     cells: [
       ...r.planting_cells.filter((c) => c.field_plan_cells.plan_id === shown.id).map((c) => ({ x: c.field_plan_cells.x, y: c.field_plan_cells.y })),
       ...cells.filter((c) => c.carried_from_planting_id === r.id).map((c) => ({ x: c.x, y: c.y })),
@@ -215,5 +226,13 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     pests: byCrop((pests.data ?? []) as (DashboardData["pests"][string][number] & { crop_id: string })[]),
     products: (productsRes.data ?? []) as ProductRow[],
     productSettings: productSettingsRes.data ?? [],
+    field: (bedPlantingsRes.data ?? []).length
+      ? {
+          widthCm: Math.round(Number(farm.width_m) * 100),
+          heightCm: Math.round(Number(farm.height_m) * 100),
+          beds: (bedsRes.data ?? []) as Bed[],
+          bedPlantings: (bedPlantingsRes.data ?? []) as BedPlanting[],
+        }
+      : null,
   };
 }

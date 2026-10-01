@@ -8,6 +8,7 @@ import { formatKDate } from "@/lib/dates";
 import { SEASON_LABEL, type PlanSeason } from "@/lib/season";
 import { gridWidth } from "@/lib/grid-fit";
 import { createClient } from "@/lib/supabase/client";
+import { FieldMap, type FieldMarker } from "@/components/FieldMap";
 import type { DashboardData, DashPlanting } from "./load";
 import { BadgeSheet } from "./BadgeSheet";
 
@@ -73,6 +74,26 @@ export function Dashboard({ data }: { data: DashboardData }) {
       return { planting: p, anchor, badges: data.badges[p.id] };
     });
 
+  // 구획 그림: 구획 심기 → 식재 (이월분은 원래 식재) → 배지 색 (경고·지연 빨강, 그 외 초록)
+  const field = data.field;
+  const plantingOfBp = useMemo(() => {
+    const m = new Map<string, DashPlanting>();
+    for (const bp of field?.bedPlantings ?? []) {
+      const p = data.plantings.find((x) => x.bedPlantingId === bp.id || x.id === bp.carried_from_planting_id);
+      if (p) m.set(bp.id, p);
+    }
+    return m;
+  }, [field, data.plantings]);
+  const fieldMarkers = useMemo(() => {
+    const out: Record<string, FieldMarker> = {};
+    for (const [bpId, p] of plantingOfBp) {
+      const bs = data.badges[p.id] ?? [];
+      if (bs.some((b) => b.state === "weather" || b.state === "overdue")) out[bpId] = "warn";
+      else if (bs.length) out[bpId] = "todo";
+    }
+    return out;
+  }, [plantingOfBp, data.badges]);
+
   const openCell = (x: number, y: number) => {
     const p = cellOwner.get(`${x},${y}`);
     if (p) router.push(`/history/${p.planCropId}?cell=${x},${y}`);
@@ -89,6 +110,25 @@ export function Dashboard({ data }: { data: DashboardData }) {
         </Link>
       </div>
 
+      {field ? (
+        <div className="rounded-2xl border border-line bg-white p-2">
+          <FieldMap
+            widthCm={field.widthCm}
+            heightCm={field.heightCm}
+            beds={field.beds}
+            plantings={field.bedPlantings}
+            cropNames={data.cropNames}
+            markers={fieldMarkers}
+            onSelectPlanting={(bpId) => {
+              const p = plantingOfBp.get(bpId);
+              if (!p) return;
+              const badges = data.badges[p.id] ?? [];
+              if (badges.length) setSheet({ planting: p, badges });
+              else router.push(`/history/${p.planCropId}`);
+            }}
+          />
+        </div>
+      ) : (
       <div className="overflow-auto rounded-lg border border-neutral-300 bg-[#e9e2d0]">
         <svg viewBox={`0 0 ${data.cols} ${data.rows}`} style={{ width: gridWidth(data.cols, data.rows), aspectRatio: `${data.cols} / ${data.rows}`, display: "block", margin: "0 auto" }}>
           {data.cells.map((c) => (
@@ -139,7 +179,10 @@ export function Dashboard({ data }: { data: DashboardData }) {
           })}
         </svg>
       </div>
-      <p className="text-xs text-neutral-500">원형 배지를 누르면 할 일 설명, 작물 칸을 누르면 히스토리를 봐요. 빨강: 기상 경보 · 주황: 지연 · 초록: 임박</p>
+      )}
+      <p className="text-xs text-muted">
+        <span className="text-primary">●</span> 할 일 · <span className="text-danger">●</span> 경고·지연 · 작물을 누르면 할 일이나 이력을 봐요
+      </p>
 
       {data.weekly.length > 0 && (
         <section className="flex flex-col gap-2 rounded-lg bg-white p-3">

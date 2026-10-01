@@ -1,19 +1,40 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
 
+/* 디자인: 밝은 바탕 + 흰 카드 + 가는 테두리. 초록 = 할 일·다음 작업, 빨강 = 경고, 나머지는 회색. */
 :root {
-  --background: #f7f6f1;
-  --foreground: #1f2a1d;
-  --primary: #3f7d3a;
+  --background: #fafaf9;
+  --foreground: #18181b;
+  --primary: #2f7d32;
+  --primary-soft: #f4faf2;
+  --primary-line: #cfe6cb;
+  --danger: #c62828;
+  --danger-soft: #fdf4f3;
+  --danger-line: #f3d0cc;
+  --muted: #71717a;
+  --line: #ececea;
+  --soil: #f4f1e8;
+  --bed: #e9e2cf;
+  --bed-line: #cbbf9f;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-line: var(--primary-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Noto Sans KR", sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
 }
