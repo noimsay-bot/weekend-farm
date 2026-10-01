@@ -48,17 +48,19 @@ export type DashboardData = {
 };
 
 export async function loadDashboard(db: SupabaseClient, farmId: string, today: string): Promise<DashboardData | null> {
-  const { data: farm } = await db.from("farms").select("id, lat, lng, region, nearest_station_id, width_m, height_m").eq("id", farmId).single();
-  if (!farm) return null;
-
-  const { data: plantingRows } = await db
+  // 모바일 화면 전환이 빠르도록 서로 기다릴 필요 없는 조회는 한꺼번에 보낸다.
+  const [{ data: farm }, { data: plantingRows }] = await Promise.all([
+    db.from("farms").select("id, lat, lng, region, nearest_station_id, width_m, height_m").eq("id", farmId).single(),
+    db
     .from("plantings")
     .select(
       "id, plan_id, plan_crop_id, crop_id, sow_date, transplant_date, plant_count, planned_plant_count, bed_planting_id, crops(name), field_plans!inner(farm_id, status, year, season), planting_cells(field_plan_cells(x, y, plan_id))",
     )
     .eq("status", "active")
     .eq("field_plans.farm_id", farmId)
-    .eq("field_plans.status", "confirmed");
+    .eq("field_plans.status", "confirmed"),
+  ]);
+  if (!farm) return null;
   type Row = {
     id: string;
     plan_id: string;
@@ -140,22 +142,32 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
 
   // 작물 단위 배지: 물주기, 방제 주의, 주간농사정보
   const cropBadges: { planCropId: string; badge: Badge }[] = [];
-  if (settings?.watering_alert_enabled) {
-    for (const w of await loadWateringDue(db, active, forecast, settings, today)) {
-      cropBadges.push({
-        planCropId: w.planCropId,
-        badge: {
-          id: `water-${w.planCropId}`,
-          kind: "watering",
-          state: "upcoming",
-          title: `${w.cropName} 물주기`,
-          date: today,
-          detail: { reason: `마지막 ${w.lastType === "rain" ? "비" : w.lastType === "watering" ? "물주기" : "심은 날"} 후 ${w.daysSince}일`, planCropId: w.planCropId },
-        },
-      });
-    }
+  const cropIds = [...new Set(active.map((a) => a.crop_id))];
+  const none = ["00000000-0000-0000-0000-000000000000"];
+  const [watering, conflicts, [weeklyInfo, ferts, pests], weekly] = await Promise.all([
+    settings?.watering_alert_enabled ? loadWateringDue(db, active, forecast, settings, today) : Promise.resolve([]),
+    loadPesticideConflicts(db, farmId, today),
+    Promise.all([
+      db.from("weekly_farm_info").select("crop_id, crop_name, summary, source_url").in("crop_id", cropIds.length ? cropIds : none).gte("week_start", addDays(today, -7)),
+      db.from("crop_fertilizer_schedules").select("*").in("crop_id", cropIds.length ? cropIds : none),
+      db.from("crop_pest_controls").select("*").in("crop_id", cropIds.length ? cropIds : none),
+    ]),
+    getWeeklyWindows(db, farm, today),
+  ]);
+  for (const w of watering) {
+    cropBadges.push({
+      planCropId: w.planCropId,
+      badge: {
+        id: `water-${w.planCropId}`,
+        kind: "watering",
+        state: "upcoming",
+        title: `${w.cropName} 물주기`,
+        date: today,
+        detail: { reason: `마지막 ${w.lastType === "rain" ? "비" : w.lastType === "watering" ? "물주기" : "심은 날"} 후 ${w.daysSince}일`, planCropId: w.planCropId },
+      },
+    });
   }
-  for (const c of await loadPesticideConflicts(db, farmId, today)) {
+  for (const c of conflicts) {
     cropBadges.push({
       planCropId: c.planCropId,
       badge: {
@@ -168,13 +180,6 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
       },
     });
   }
-  const cropIds = [...new Set(active.map((a) => a.crop_id))];
-  const none = ["00000000-0000-0000-0000-000000000000"];
-  const [weeklyInfo, ferts, pests] = await Promise.all([
-    db.from("weekly_farm_info").select("crop_id, crop_name, summary, source_url").in("crop_id", cropIds.length ? cropIds : none).gte("week_start", addDays(today, -7)),
-    db.from("crop_fertilizer_schedules").select("*").in("crop_id", cropIds.length ? cropIds : none),
-    db.from("crop_pest_controls").select("*").in("crop_id", cropIds.length ? cropIds : none),
-  ]);
   for (const w of weeklyInfo.data ?? []) {
     for (const a of active.filter((a) => a.crop_id === w.crop_id && !a.is_companion)) {
       cropBadges.push({
@@ -221,7 +226,7 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     plantings,
     badges: Object.fromEntries(badgeMap),
     todo,
-    weekly: await getWeeklyWindows(db, farm, today),
+    weekly,
     fertilizers: byCrop((ferts.data ?? []) as (FertilizerRow & { crop_id: string; sequence: number; source_url: string | null })[]),
     pests: byCrop((pests.data ?? []) as (DashboardData["pests"][string][number] & { crop_id: string })[]),
     products: (productsRes.data ?? []) as ProductRow[],
