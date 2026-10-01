@@ -110,6 +110,24 @@ export function Dashboard({ data }: { data: DashboardData }) {
         </Link>
       </div>
 
+      {data.unplaced.length > 0 && (
+        <section className="flex flex-col gap-2 rounded-2xl border border-primary-line bg-primary-soft p-3">
+          <h2 className="text-sm font-semibold text-primary">밭에 놓을 작물</h2>
+          <p className="text-xs text-muted">기록한 작물이에요. 자리를 정하면 밭 그림과 연작 기록에 들어가요.</p>
+          <ul className="flex flex-col gap-1">
+            {data.unplaced.map((u) => (
+              <li key={u.id} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm">
+                <span className="font-medium">{u.cropName}</span>
+                {u.plantedOn && <span className="text-xs text-muted">{formatKDate(u.plantedOn)}</span>}
+                <Link href={`/place/${u.id}`} className="ml-auto rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white">
+                  자리 정하기
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {field ? (
         <div className="rounded-2xl border border-line bg-white p-2">
           <FieldMap

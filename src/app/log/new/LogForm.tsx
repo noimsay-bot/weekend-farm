@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { regenerateTasks } from "@/lib/planting/tasks";
 import { resizePhoto } from "@/lib/image";
 import { harvestIntervalWarnings, resistanceWarnings } from "@/lib/pesticide";
 import { USER_WORK_TYPES, WORK_TYPE_LABEL, type WorkType } from "@/lib/work-types";
@@ -19,6 +20,13 @@ export type PestOption = {
   safe_days_before_harvest: number | null;
 };
 
+// 파종·정식 기록용: 고를 수 있는 작물(백과)과 계획만 하고 아직 안 심은 식재
+export type CropOption = { id: string; name: string };
+export type UnsownPlanting = { id: string; crop_id: string; crop_name: string; season_label: string };
+type PlantingChoice = { plantingId: string | null; cropId: string };
+
+const isPlantingType = (t: WorkType) => t === "sowing" || t === "transplanting";
+
 type PestContext = {
   previous: { planCropId: string; cropId: string; cropName: string; moas: string[] }[];
   harvests: { cropId: string; cropName: string; date: string }[];
@@ -29,12 +37,18 @@ export function LogForm({
   initialDate,
   targets,
   pests,
+  crops,
+  unsown = [],
+  hasBeds = false,
   onSaved,
 }: {
   farmId: string;
   initialDate: string;
   targets: TargetCrop[];
   pests: PestOption[];
+  crops?: CropOption[];
+  unsown?: UnsownPlanting[];
+  hasBeds?: boolean;
   onSaved?: () => void;
 }) {
   const router = useRouter();
@@ -46,6 +60,11 @@ export function LogForm({
   const [pesticides, setPesticides] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [planting, setPlanting] = useState<PlantingChoice | null>(null);
+  const [plantCount, setPlantCount] = useState("");
+  const [cropQuery, setCropQuery] = useState("");
+  // 백과 작물 목록이 있으면(기록 탭) 파종·정식은 작물을 골라 식재를 만든다
+  const plantingMode = isPlantingType(type) && crops !== undefined;
 
   const [pestContext, setPestContext] = useState<PestContext>({ previous: [], harvests: [] });
 
@@ -109,7 +128,59 @@ export function LogForm({
     setter(next);
   }
 
+  // 파종·정식: 식재를 만들거나(기록부터) 계획한 식재에 날짜를 넣고, 작업 기록과 예정 작업을 만든다.
+  async function savePlanting() {
+    if (!planting) return setError("심은 작물을 고르세요.");
+    setBusy(true);
+    setError("");
+    const supabase = createClient();
+    const count = plantCount ? Number(plantCount) : null;
+    const { data: plantingId, error: recErr } = await supabase.rpc("record_planting", {
+      p_farm_id: farmId,
+      p_crop_id: planting.cropId,
+      p_date: date,
+      p_method: type === "sowing" ? "direct" : "transplant",
+      p_plant_count: count,
+      p_planting_id: planting.plantingId,
+    });
+    if (recErr || !plantingId) {
+      setBusy(false);
+      return setError(
+        recErr?.message.includes("plan_not_confirmed")
+          ? "이 작기의 계획이 아직 확정 전이에요. 계획을 확정하거나 계획에 작물을 넣은 뒤 기록하세요."
+          : "기록하지 못했어요.",
+      );
+    }
+    const { data: pl } = await supabase.from("plantings").select("plan_crop_id, bed_planting_id").eq("id", plantingId).single();
+    const { data: claims } = await supabase.auth.getClaims();
+    const { data: log, error } = await supabase
+      .from("work_logs")
+      .insert({ farm_id: farmId, work_date: date, work_type: type, memo: memo.trim() || null, created_by: claims?.claims.sub })
+      .select("id")
+      .single();
+    let partial = Boolean(error || !log);
+    if (log && pl) {
+      const t = await supabase.from("work_log_targets").insert({ work_log_id: log.id, plan_crop_id: pl.plan_crop_id });
+      partial ||= Boolean(t.error);
+    }
+    try {
+      await regenerateTasks(supabase, plantingId);
+    } catch {
+      partial = true;
+    }
+    setBusy(false);
+    if (partial) return setError("심은 기록은 저장했지만 작업 기록·예정 작업 일부를 만들지 못했어요.");
+    // 밭 그림이 있고 아직 자리를 안 정했으면 바로 배치 화면으로
+    if (hasBeds && !pl?.bed_planting_id) {
+      router.push(`/place/${plantingId}`);
+    } else {
+      router.push(`/calendar?m=${date.slice(0, 7)}`);
+    }
+    router.refresh();
+  }
+
   async function save() {
+    if (plantingMode) return savePlanting();
     if (targets.length && chosen.size === 0) return setError("대상 작물을 하나 이상 고르세요.");
     setBusy(true);
     setError("");
@@ -179,6 +250,32 @@ export function LogForm({
         </div>
       </div>
 
+      {plantingMode && (
+        <PlantingPicker
+          crops={crops ?? []}
+          unsown={unsown}
+          query={cropQuery}
+          onQuery={setCropQuery}
+          value={planting}
+          onChange={setPlanting}
+          verb={type === "sowing" ? "파종" : "정식"}
+        />
+      )}
+      {plantingMode && (
+        <label className="flex flex-col gap-1">
+          <span className="font-medium">{type === "sowing" ? "포기·구멍 수 (줄뿌림·흩어뿌림은 비워 두세요)" : "포기 수"}</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            className="h-11 rounded border border-neutral-300 bg-white px-2 text-base"
+            value={plantCount}
+            onChange={(e) => setPlantCount(e.target.value)}
+          />
+        </label>
+      )}
+
+      {!plantingMode && (
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <span className="font-medium">대상 작물</span>
@@ -205,6 +302,7 @@ export function LogForm({
           ))}
         </div>
       </div>
+      )}
 
       {type === "pest_control" && (
         <div className="flex flex-col gap-1">
@@ -243,6 +341,66 @@ export function LogForm({
       <Button onClick={save} disabled={busy}>
         {busy ? "저장 중…" : "기록 저장"}
       </Button>
+    </div>
+  );
+}
+
+function PlantingPicker({
+  crops,
+  unsown,
+  query,
+  onQuery,
+  value,
+  onChange,
+  verb,
+}: {
+  crops: CropOption[];
+  unsown: UnsownPlanting[];
+  query: string;
+  onQuery: (q: string) => void;
+  value: PlantingChoice | null;
+  onChange: (v: PlantingChoice) => void;
+  verb: string;
+}) {
+  const q = query.trim();
+  const shown = q ? crops.filter((c) => c.name.includes(q)) : crops;
+  const chip = (on: boolean) => `rounded-full px-3 py-2 ${on ? "bg-primary text-white" : "border bg-white"}`;
+  return (
+    <div className="flex flex-col gap-3">
+      {unsown.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">계획한 작물</span>
+          <p className="text-xs text-neutral-500">계획에 넣어 둔 작물을 고르면 그 자리에 {verb}한 날짜가 들어가요.</p>
+          <div className="flex flex-wrap gap-2">
+            {unsown.map((u) => (
+              <button key={u.id} className={chip(value?.plantingId === u.id)} onClick={() => onChange({ plantingId: u.id, cropId: u.crop_id })}>
+                {u.crop_name}
+                <span className="ml-1 text-xs opacity-70">{u.season_label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="flex flex-col gap-1">
+        <span className="font-medium">{unsown.length ? "계획에 없던 작물" : `${verb}한 작물`}</span>
+        <p className="text-xs text-neutral-500">기록부터 하고, 밭 그림의 자리는 다음 화면에서 정해요.</p>
+        {crops.length > 12 && (
+          <input
+            className="h-10 rounded border border-neutral-300 bg-white px-2 text-base"
+            placeholder="작물 이름 찾기"
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+          />
+        )}
+        <div className="flex flex-wrap gap-2">
+          {shown.map((c) => (
+            <button key={c.id} className={chip(value?.plantingId === null && value.cropId === c.id)} onClick={() => onChange({ plantingId: null, cropId: c.id })}>
+              {c.name}
+            </button>
+          ))}
+          {shown.length === 0 && <p className="text-neutral-500">찾는 작물이 없어요.</p>}
+        </div>
+      </div>
     </div>
   );
 }

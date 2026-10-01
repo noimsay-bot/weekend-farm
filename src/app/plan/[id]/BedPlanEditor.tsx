@@ -36,18 +36,18 @@ export type BedEditorData = EditorData & {
   sowing: Record<string, Sowing>;
 };
 
-type Sowing = { sowMethod: "direct" | "transplant" | "both" | null; pattern: Exclude<SowPattern, "plant"> | null; rowSpacing: number | null };
+export type Sowing = { sowMethod: "direct" | "transplant" | "both" | null; pattern: Exclude<SowPattern, "plant"> | null; rowSpacing: number | null };
 
 // 자료에 줄간격이 없을 때 줄뿌림 줄 수 계산에 쓰는 값
 const FALLBACK_ROW_SPACING = 20;
 
 // 작물에 고를 수 있는 심기 방식. 모종만 쓰는 작물은 모종 심기뿐, 직파 작물은 파종 방식 셋.
-function patternsFor(s: Sowing | undefined): SowPattern[] {
+export function patternsFor(s: Sowing | undefined): SowPattern[] {
   if (!s || s.sowMethod === "transplant" || s.sowMethod === null) return ["plant"];
   return s.sowMethod === "both" ? ["plant", "row", "hill", "broadcast"] : ["row", "hill", "broadcast"];
 }
 
-function rowsFor(bed: Bed, method: SowPattern, s: Sowing | undefined, current: number) {
+export function rowsFor(bed: Bed, method: SowPattern, s: Sowing | undefined, current: number) {
   if (bed.kind === "plot" || method === "broadcast") return 1;
   if (method === "row") return autoRowCount(bed, s?.rowSpacing ?? FALLBACK_ROW_SPACING) ?? 1;
   return current;
@@ -523,7 +523,7 @@ function BedPanel({
   );
 }
 
-function PlantingPanel({
+export function PlantingPanel({
   bed,
   planting,
   cropName,
@@ -545,8 +545,8 @@ function PlantingPanel({
   editable: boolean;
   warned: boolean;
   onSave: (p: BedPlanting) => void;
-  onChangeCrop: () => void;
-  onRemove: () => void;
+  onChangeCrop?: () => void;
+  onRemove?: () => void;
 }) {
   const len = bedLength(bed);
   const auto = autoPlantCount(bed, planting, spacing);
@@ -564,7 +564,7 @@ function PlantingPanel({
           {cropName}
           {planting.carried_from_planting_id && <span className="text-xs text-muted">(이월 · 잠금)</span>}
         </span>
-        {editable && (
+        {editable && onChangeCrop && (
           <button className="text-sm text-primary" onClick={onChangeCrop}>
             작물 바꾸기
           </button>
@@ -691,7 +691,7 @@ function PlantingPanel({
           {spacing ? `포기 간격 ${spacing}cm 기준으로 자동 계산해요.` : "작물 백과에 포기 간격이 없어 포기 수를 직접 입력하세요."}
         </p>
       )}
-      {editable && (
+      {editable && onRemove && (
         <button className="h-10 rounded-lg border border-danger-line text-sm text-danger" onClick={onRemove}>
           이 작물 빼기
         </button>

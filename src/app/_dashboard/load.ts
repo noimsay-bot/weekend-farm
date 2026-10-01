@@ -45,6 +45,8 @@ export type DashboardData = {
   productSettings: { usage: string; product_id: string }[];
   // 구획으로 그린 밭 (없으면 예전 칸 그림)
   field: { widthCm: number; heightCm: number; beds: Bed[]; bedPlantings: BedPlanting[] } | null;
+  // 기록만 하고 밭 그림에 아직 안 놓은 식재
+  unplaced: { id: string; cropName: string; plantedOn: string | null }[];
 };
 
 export async function loadDashboard(db: SupabaseClient, farmId: string, today: string): Promise<DashboardData | null> {
@@ -105,7 +107,8 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     db
       .from("plan_bed_plantings")
       .select("id, bed_id, crop_id, rows, layout, method, start_cm, length_cm, plant_count, carried_from_planting_id")
-      .eq("plan_id", shown.id),
+      // 작기가 겹쳐도 밭은 하나이므로 재배 중인 모든 계획의 구획 심기를 그린다
+      .in("plan_id", plans.map((p) => p.id)),
   ]);
 
   const cells = cellsRes.data ?? [];
@@ -231,12 +234,18 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     pests: byCrop((pests.data ?? []) as (DashboardData["pests"][string][number] & { crop_id: string })[]),
     products: (productsRes.data ?? []) as ProductRow[],
     productSettings: productSettingsRes.data ?? [],
-    field: (bedPlantingsRes.data ?? []).length
+    unplaced: (bedsRes.data ?? []).length
+      ? plantings.filter((p) => !p.bedPlantingId && p.cells.length === 0).map((p) => ({ id: p.id, cropName: p.cropName, plantedOn: p.plantedOn }))
+      : [],
+    field: (bedsRes.data ?? []).length
       ? {
           widthCm: Math.round(Number(farm.width_m) * 100),
           heightCm: Math.round(Number(farm.height_m) * 100),
           beds: (bedsRes.data ?? []) as Bed[],
-          bedPlantings: (bedPlantingsRes.data ?? []) as BedPlanting[],
+          // 재배 중인 식재의 구획 심기만 (끝난 식재는 그리지 않는다)
+          bedPlantings: ((bedPlantingsRes.data ?? []) as BedPlanting[]).filter((bp) =>
+            rows.some((r) => r.bed_planting_id === bp.id || r.id === bp.carried_from_planting_id),
+          ),
         }
       : null,
   };
