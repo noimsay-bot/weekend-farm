@@ -1,5 +1,6 @@
 // 계획서 부록 A 확정 목록 (85종). 품종·태그 이름만 담는다 (재배 수치 없음).
-// aliases: 농사로 텃밭가꾸기 글 제목과 맞추기 위한 다른 이름.
+// aliases: 농사로 텃밭가꾸기 글 제목·비료 처방 작물명과 맞추기 위한 다른 이름.
+// 원문이 없는 품종은 상위 작물 이름을 넣어 그 원문을 쓴다 (돌산갓 → 갓, 봄동·얼갈이배추 → 배추, 알타리무 → 무).
 
 export type CropSeed = {
   name: string;
@@ -30,7 +31,7 @@ export const CROP_SEEDS: CropSeed[] = [
   { name: "땅콩" },
   { name: "수세미", aliases: ["수세미오이"] },
   // 콩·깨
-  { name: "완두" },
+  { name: "완두", aliases: ["완두콩"] },
   { name: "강낭콩" },
   { name: "그린빈" },
   { name: "콩(메주콩·서리태)", aliases: ["콩"] },
@@ -53,14 +54,14 @@ export const CROP_SEEDS: CropSeed[] = [
   { name: "무", tags: [KIMJANG] },
   { name: "배추", tags: [KIMJANG] },
   { name: "양배추", varieties: ["양배추", "적양배추", "방울양배추"] },
-  { name: "돌산갓", tags: [KIMJANG] },
+  { name: "돌산갓", tags: [KIMJANG], aliases: ["갓"] },
   { name: "갓", tags: [KIMJANG] },
   { name: "청경채" },
   { name: "채심(초이섬)", aliases: ["채심", "초이섬"] },
   { name: "카이란" },
-  { name: "알타리무", tags: [KIMJANG] },
+  { name: "알타리무", tags: [KIMJANG], aliases: ["무"] },
   { name: "열무" },
-  { name: "얼갈이배추" },
+  { name: "얼갈이배추", aliases: ["배추"] },
   { name: "브로콜리" },
   { name: "콜리플라워" },
   { name: "콜라비" },
@@ -80,7 +81,7 @@ export const CROP_SEEDS: CropSeed[] = [
   { name: "대파", tags: [KIMJANG], aliases: ["파"] },
   { name: "쪽파", tags: [KIMJANG] },
   { name: "부추" },
-  { name: "봄동" },
+  { name: "봄동", aliases: ["배추"] },
   { name: "시금치" },
   { name: "마늘" },
   { name: "양파" },

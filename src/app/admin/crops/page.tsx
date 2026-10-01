@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { REQUIRED_CROP_FIELDS } from "@/lib/crop-fields";
 import { Screen } from "@/components/ui";
 import { ClaimAdmin } from "./ClaimAdmin";
+import { QuickConfirm } from "./QuickConfirm";
 
 type CropRow = { id: string; name: string; status: string; source_url: string | null };
 type SourceRow = { crop_id: string; field_name: string; approved: boolean; manual_input: boolean };
@@ -34,12 +35,19 @@ export default async function AdminCropsPage() {
   }
   const list = (crops ?? []) as CropRow[];
   const confirmed = list.filter((c) => c.status === "confirmed").length;
+  const quick = list.filter((c) => c.status === "draft" && c.source_url).map((c) => c.id);
 
   return (
     <Screen title="작물 데이터 관리">
       <p className="text-sm text-neutral-600">
-        확정 {confirmed} / 전체 {list.length}종. 필수 {required.size}개 필드를 모두 승인하거나 직접 입력하면 확정할 수 있어요.
+        확정 {confirmed} / 전체 {list.length}종. 원문이 있는 작물은 한 번에 확정할 수 있어요. 원문에서 뽑은 값은 승인되고, 원문에 없는 값은
+        비워 둔 채(앱에서 &lsquo;모름&rsquo;으로 처리) 확정돼요. 빈 값은 나중에 작물을 눌러 채우면 돼요.
       </p>
+      <QuickConfirm
+        cropIds={quick}
+        label={`원문 있는 작물 ${quick.length}종 한 번에 확정`}
+        confirmText={`원문이 있는 작물 ${quick.length}종을 확정할까요? 원문에서 뽑은 값은 승인되고 나머지는 빈 값으로 남아요.`}
+      />
       <ul className="flex flex-col divide-y rounded-lg bg-white">
         {list.map((c) => {
           const n = done.get(c.id) ?? 0;

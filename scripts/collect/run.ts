@@ -166,8 +166,14 @@ async function main() {
   }
 
   console.log("3/4 비료 표준사용량 처방");
-  if (dataKey) {
-    const standards = await listFertilizerStandards(dataKey);
+  // 일일 트래픽(개발계정 1,000건) 초과 등으로 실패하면 기존 비료 데이터를 그대로 두고 이 단계만 건너뛴다
+  const standards = dataKey
+    ? await listFertilizerStandards(dataKey).catch((e: Error) => {
+        skipped.push(`비료 표준사용량 처방 수집 실패(기존 데이터 유지): ${e.message}`);
+        return null;
+      })
+    : null;
+  if (standards) {
     for (const seed of CROP_SEEDS) {
       const names = [seed.name, ...(seed.aliases ?? [])];
       const std = pickFertilizerStandard(standards, names);
@@ -178,7 +184,7 @@ async function main() {
       await must(db.from("crop_fertilizer_schedules").insert(rows));
       reports.get(seed.name)!.fertilizer = Boolean(std);
     }
-  } else {
+  } else if (!dataKey) {
     skipped.push("DATA_GO_KR_SERVICE_KEY 없음: 비료 처방 수집 건너뜀");
   }
 

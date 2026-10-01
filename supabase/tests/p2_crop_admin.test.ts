@@ -72,6 +72,40 @@ describe("crop confirmation", () => {
     expect(Number(crop.min_temp_c)).toBe(15);
   });
 
+  it("quick confirm approves extracted values and confirms only draft crops with a source", async () => {
+    const insert = async (name: string, url: string | null) => {
+      const [c] = await asUser<{ id: string }>(db, FIRST, "insert into crops (name, source_url) values ($1, $2) returning id", [name, url]);
+      return c.id;
+    };
+    const withSource = await insert("배추", "https://nongsaro/baechu");
+    const noSource = await insert("봄동", null);
+    await db.query(
+      "insert into crop_field_sources (crop_id, field_name, extracted_value, source_text) values ($1, 'days_to_harvest', '70', '정식 후 70일'), ($1, 'seedling_days', null, '육묘 기간은 품종에 따라')",
+      [withSource],
+    );
+
+    await expect(asUser(db, SECOND, "select quick_confirm_crops($1)", [[withSource]])).rejects.toThrow(/admin only/);
+    const [r] = await asUser<{ n: number }>(db, FIRST, "select quick_confirm_crops($1) as n", [[withSource, noSource, cropId]]);
+    expect(r.n).toBe(1);
+
+    const status = await db.query<{ name: string; status: string }>("select name, status from crops where id = any($1) order by name", [
+      [withSource, noSource],
+    ]);
+    expect(status.rows).toEqual([
+      { name: "배추", status: "confirmed" },
+      { name: "봄동", status: "draft" },
+    ]);
+    const sources = await db.query<{ field_name: string; approved: boolean }>(
+      "select field_name, approved from crop_field_sources where crop_id = $1 order by field_name",
+      [withSource],
+    );
+    // 값이 있는 필드만 승인되고, 근거 문장만 있는 필드는 그대로 남는다
+    expect(sources.rows).toEqual([
+      { field_name: "days_to_harvest", approved: true },
+      { field_name: "seedling_days", approved: false },
+    ]);
+  });
+
   it("rejects unknown fields", async () => {
     await expect(asUser(db, FIRST, "select set_crop_field($1, 'status', 'confirmed')", [cropId])).rejects.toThrow(
       /unknown field/,

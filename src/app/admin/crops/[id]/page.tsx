@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OPTIONAL_CROP_FIELDS, REQUIRED_CROP_FIELDS } from "@/lib/crop-fields";
 import { Screen } from "@/components/ui";
+import { QuickConfirm } from "../QuickConfirm";
 import { CropActions } from "./CropActions";
 import { FieldRow, type FieldSource } from "./FieldRow";
 
@@ -47,6 +48,13 @@ export default async function AdminCropPage({ params }: PageProps<"/admin/crops/
           </a>
         )}
       </div>
+      {c.status !== "confirmed" && c.source_url && (
+        <QuickConfirm
+          cropIds={[c.id]}
+          label="원문 값 승인하고 바로 확정"
+          confirmText={`${c.name}을(를) 확정할까요? 원문에서 뽑은 값은 승인되고, 값이 없는 필드는 빈 값으로 남아요.`}
+        />
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">필수 필드</h2>
