@@ -1,0 +1,263 @@
+{
+  "name": "고수",
+  "category": "허브",
+  "summary": "잎과 줄기에서 강한 향이 나는 한해살이 허브(코리앤더·실란트로). 서늘한 봄·가을에 잘 자라고 더우면 금방 꽃대가 올라온다. 옮겨 심기를 싫어해 씨를 밭에 바로 뿌리고, 자라는 대로 조금씩 잘라 먹는다.",
+  "family": {
+    "value": "산형과",
+    "confidence": "medium",
+    "refs": [
+      "r1"
+    ],
+    "evidence": "학명 Coriandrum sativum. 당근·파슬리와 같은 산형과(미나리과)."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "direct",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "옮겨 심기를 싫어하고 실내에 오래 두면 웃자란다(RHS). 숨비재제주농부도 구멍에 씨를 2알씩 바로 넣는다."
+    },
+    "season": {
+      "value": "autumn",
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "여름 고온에는 잘 자라지 않고 봄·가을, 따뜻한 겨울 하우스에서 잘 자란다(숨비재제주농부). 덥고 건조하면 꽃대가 선다(RHS)."
+    },
+    "seedling_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "직파 작물이라 육묘하지 않는다."
+    },
+    "min_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "max_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "late_frost_sensitive": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "days_to_harvest": {
+      "value": 70,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "파종 후 10주쯤부터 수확(RHS). 숨비재제주농부는 파종 두 달 반 무렵 수확하는 모습을 보여준다. 잎은 10~15cm 자라면 조금씩 잘라 먹을 수 있다."
+    },
+    "harvest_window_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rotation_risk": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rest_seasons": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "overwinter_default": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_avoid_rain": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "schedule_tolerance_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plant_spacing_cm": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "row_spacing_cm": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plants_per_pyeong": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "잎을 몇 장씩 잘라 먹고 회복시키는 방식으로 거둔다(RHS). 가지치기 과정은 없다."
+    },
+    "pruning_method": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "pruning_timing": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "heat_tolerance": {
+      "value": "low",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "덥고 건조하면 바로 꽃대가 올라오고(RHS), 한여름엔 잘 자라지 않는다(숨비재제주농부)."
+    },
+    "watering_interval_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "water_need": {
+      "value": "medium",
+      "confidence": "medium",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "밭에서는 오래 가물 때만 물을 준다(RHS). 마르면 꽃대가 빨리 선다."
+    },
+    "rain_wait_condition": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    }
+  },
+  "calendars": [
+    {
+      "region": "전국",
+      "cropping_type": "봄 재배",
+      "activity": "sow",
+      "start": "03-15",
+      "end": "05-05",
+      "refs": [
+        "r2"
+      ]
+    },
+    {
+      "region": "전국",
+      "cropping_type": "가을 재배",
+      "activity": "sow",
+      "start": "08-25",
+      "end": "10-05",
+      "refs": [
+        "r2"
+      ]
+    }
+  ],
+  "guides": [
+    {
+      "section": "소개",
+      "body": "지중해 연안이 원산인 산형과 한해살이 허브다. 잎은 실란트로, 씨는 코리앤더로 쓴다. 서늘한 날씨를 좋아하고, 덥거나 가물거나 낮이 길어지면 금방 꽃대가 올라온다.\n\n씨 한 알(사실은 열매)에서 싹이 두 개 나오는 경우가 많다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 옮겨 심기를 싫어하니 밭에 바로 뿌린다.\n- 시기: 봄 3월 중순~5월 초, 가을 8월 말~10월 초. 가을 재배가 향이 진하다.\n- 얕은 골에 뿌리거나 구멍에 2알씩 넣는다. 잎을 먹으려면 5cm 간격, 씨를 받으려면 20cm로 솎는다.\n- 싹이 나기까지 1~3주 걸린다.",
+      "refs": [
+        "r1",
+        "r2",
+        "v1"
+      ]
+    },
+    {
+      "section": "관리",
+      "body": "- 오래 가물 때만 물을 준다. 마르면 꽃대가 빨리 선다.\n- 한 번에 많이 뿌리지 말고 몇 주 간격으로 나눠 뿌리면 오래 거둔다.\n- 어린 싹은 민달팽이, 진딧물을 조심한다.",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "section": "수확",
+      "body": "- 10~15cm 자라면 포기마다 잎을 몇 장씩 잘라 먹고 2주쯤 회복시킨다.\n- 파종 후 10주 안팎이면 포기째 뽑아 거둘 수 있다.\n- 꽃대가 오르면 잎이 거칠어지니 씨를 받거나 정리한다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "section": "자주 하는 실수",
+      "body": "- 모종을 옮겨 심어 몸살을 앓고 바로 꽃대가 선다.\n- 한여름에 뿌린다.\n- 한꺼번에 많이 뿌려 한꺼번에 꽃대가 선다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "key": "r1",
+      "kind": "doc",
+      "title": "How to grow coriander",
+      "url": "https://www.rhs.org.uk/herbs/coriander/grow-your-own",
+      "publisher": "영국 왕립원예협회(RHS)"
+    },
+    {
+      "key": "r2",
+      "kind": "doc",
+      "title": "고수 심는 시기, 재배 방법",
+      "url": "https://goodinfo.leedolife.com/gosu-simneun-sigi-jaebae-bangbeop-suhoeg-sigi-hyoneung-wanby/",
+      "publisher": "개인 블로그 (국내 공공기관 자료가 없어 시기 참고용)"
+    },
+    {
+      "key": "v1",
+      "kind": "video",
+      "title": "비닐멀칭 고수 키우는방법 이렇게 키우면 고수 병해충 없이 잘자라고 재배가 쉽습니다",
+      "url": "https://www.youtube.com/watch?v=JmVXho4kLCs",
+      "publisher": "숨비재제주농부",
+      "summary": "비닐 멀칭 구멍에 씨를 2알씩 넣어 기른다(씨 하나에서 싹이 둘). 한여름 고온에는 잘 자라지 않고, 가온하지 않는 하우스에서 밤 기온이 영하 가까이 내려가도 두 달 반쯤 잘 자랐다. 포기째 뽑아 거둔다."
+    }
+  ]
+}

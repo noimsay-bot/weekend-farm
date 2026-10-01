@@ -1,0 +1,218 @@
+{
+  "name": "이탈리안 파슬리",
+  "category": "허브",
+  "summary": "잎이 납작한 파슬리(플랫리프). 서늘한 날씨를 좋아하는 두해살이 허브로, 첫해에 잎을 거두고 이듬해에는 꽃대가 올라온다. 싹이 매우 느리게 트는 것이 특징이다.",
+  "family": {
+    "value": "산형과",
+    "confidence": "medium",
+    "refs": [
+      "r2"
+    ],
+    "evidence": "학명 Petroselinum crispum(농사로). 산형과(미나리과)."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "both",
+      "confidence": "medium",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "봄~늦여름 밭에 바로 뿌리거나, 이른 봄 실내에서 모종을 길러 옮긴다(RHS)."
+    },
+    "season": {
+      "value": "spring",
+      "confidence": "medium",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "첫해에 잎을 거두고 이듬해 꽃이 핀다. 늦봄부터 가을까지 수확(RHS)."
+    },
+    "seedling_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "min_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "생육 적온 15~20℃(농사로)뿐이고 두 번째 출처를 확인하지 못함."
+    },
+    "max_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "25℃ 이상에서 발육이 나빠진다(농사로). 두 번째 출처 없음."
+    },
+    "late_frost_sensitive": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "days_to_harvest": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_window_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rotation_risk": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rest_seasons": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "overwinter_default": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_avoid_rain": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "schedule_tolerance_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plant_spacing_cm": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "품종에 따라 포기 15~30cm, 줄 20~30cm(RHS). 두 번째 출처를 확인하지 못해 비워 둠."
+    },
+    "row_spacing_cm": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plants_per_pyeong": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "바깥 잎부터 따 먹는다. 가지치기 과정은 없다."
+    },
+    "pruning_method": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "pruning_timing": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "heat_tolerance": {
+      "value": "low",
+      "confidence": "medium",
+      "refs": [
+        "r2"
+      ],
+      "evidence": "생육 적온 15~20℃, 25℃ 이상 고온에서 발육 불량(농사로)."
+    },
+    "watering_interval_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "water_need": {
+      "value": "medium",
+      "confidence": "medium",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "촉촉하되 질지 않은 흙(RHS)."
+    },
+    "rain_wait_condition": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    }
+  },
+  "calendars": [],
+  "guides": [
+    {
+      "section": "소개",
+      "body": "유럽 남동부와 북아프리카가 원산인 산형과 허브다. 잎이 납작한 이탈리안(플랫리프) 파슬리는 곱슬 파슬리보다 향이 진해 요리에 많이 쓴다. 15~20℃에서 잘 자라고 25℃ 이상이면 약해지며, 추위에는 강해 평균 5℃에서도 거둘 수 있다.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 밭에는 봄부터 늦여름까지 1cm 깊이로 뿌린다. 이른 봄엔 실내에서 모종을 기른다.\n- 싹이 트기까지 한 달 넘게 걸리기도 하니 흙이 마르지 않게 지켜본다.\n- 간격은 포기 15~30cm, 줄 20~30cm.",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "section": "관리",
+      "body": "- 흙은 촉촉하게, 물이 고이지 않게.\n- 해가 잘 들거나 반그늘인 곳이 좋다.\n- 진딧물, 당근뿌리파리, 민달팽이를 조심한다.",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "section": "수확",
+      "body": "- 늦봄부터 가을까지 바깥 잎부터 줄기째 잘라 쓴다.\n- 이듬해에는 꽃대가 올라와 잎이 줄어드니 해마다 새로 심는 편이 낫다.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "key": "r1",
+      "kind": "doc",
+      "title": "How to grow parsley",
+      "url": "https://www.rhs.org.uk/herbs/parsley/grow-your-own",
+      "publisher": "영국 왕립원예협회(RHS)"
+    },
+    {
+      "key": "r2",
+      "kind": "doc",
+      "title": "텃밭가꾸기 - 파슬리 (도시텃밭 동반식물)",
+      "url": "https://www.nongsaro.go.kr/portal/ps/psz/psza/contentSub.ps?menuId=PS00199&cntntsNo=219083",
+      "publisher": "농촌진흥청 농사로"
+    }
+  ]
+}

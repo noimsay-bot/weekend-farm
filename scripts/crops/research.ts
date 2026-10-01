@@ -1,6 +1,6 @@
 // 작물 조사 도구 (자료 작성용, DB 접근 없음)
 //   npm run crops:research -- nongsaro 배추          농사로 텃밭가꾸기 원문 (NONGSARO_GARDEN_KEY)
-//   npm run crops:research -- videos 배추            광닭이·농사친구 채널에서 검색
+//   npm run crops:research -- videos 배추            광닭이·농사친구·숨비재제주농부 채널에서 검색
 //   npm run crops:research -- transcript <videoId>   자동 자막 텍스트
 // 영상 자막은 요약용 참고로만 쓰고 원문을 자료에 옮기지 않는다.
 import { htmlToText } from "../collect/text";
@@ -8,6 +8,7 @@ import { htmlToText } from "../collect/text";
 const CHANNELS = [
   { name: "광닭이", path: "@광닭이티비" },
   { name: "농사친구", path: "channel/UCVGT1BEkyns0nPabsFgO18g" },
+  { name: "숨비재제주농부", path: "channel/UC3hUt6SONwK_PmDMz4s0u6A" },
 ];
 const UA = "Mozilla/5.0";
 const ANDROID_UA = "com.google.android.youtube/20.10.38 (Linux; U; Android 14)";

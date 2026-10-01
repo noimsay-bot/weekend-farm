@@ -1,0 +1,388 @@
+{
+  "name": "대파",
+  "category": "양념채소",
+  "summary": "모종을 길러 옮겨 심고, 흙을 북돋워 흰 부분을 길게 키우는 양념채소. 거름을 많이 먹고 물 빠짐이 나쁜 땅을 싫어한다. 여름 더위엔 잘 크지 않다가 9~10월에 다시 자란다. 외대파는 노지 월동이 어렵고 조선대파는 월동한다.",
+  "family": {
+    "value": "백합과",
+    "confidence": "medium",
+    "refs": [
+      "r1"
+    ],
+    "evidence": "학명 Allium fistulosum(농사로). 최근 분류에서는 수선화과로 두기도 한다."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "transplant",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "묘판·트레이에 씨를 뿌려 기른 모종을 옮겨 심는다."
+    },
+    "season": {
+      "value": "spring",
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "봄 재배(3~4월 파종, 5~6월 정식)가 기본. 가을 재배(9월 중순 파종, 이듬해 봄 수확)도 있다."
+    },
+    "seedling_days": {
+      "value": 60,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v3"
+      ],
+      "evidence": "봄 재배는 3~4월에 뿌려 5~6월에 옮긴다(농사로). 파종 후 최소 50일 이상 키워 옮긴다(농사친구)."
+    },
+    "min_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "max_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "late_frost_sensitive": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "days_to_harvest": {
+      "value": 45,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "정식 후 40~50일이면 먹을 만해진다. 수확기는 따로 없어 크기에 따라 실파·중파·대파로 쓴다."
+    },
+    "harvest_window_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "수확기가 정해져 있지 않다(농사로). 일수로 정할 수 없음."
+    },
+    "rotation_risk": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rest_seasons": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "overwinter_default": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_avoid_rain": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "schedule_tolerance_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plant_spacing_cm": {
+      "value": 10,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2",
+        "v3"
+      ],
+      "evidence": "포기 10cm(농사로), 7~12cm에 2~3포기씩(농진청 웹진), 구멍 10~15cm(농사친구)."
+    },
+    "row_spacing_cm": {
+      "value": 30,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v3"
+      ],
+      "evidence": "평이랑 골 간격 30~40cm(농사로), 줄뿌림 줄 간격 20cm(농사친구). 북주기 흙을 고려해 30cm."
+    },
+    "plants_per_pyeong": {
+      "value": 110,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v3"
+      ],
+      "evidence": "줄 30cm × 포기 10cm 기준 계산값. 한 구멍에 모종 2~4개를 함께 심기도 한다."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "가지치기 대신 북주기로 흰 부분을 키운다."
+    },
+    "pruning_method": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "pruning_timing": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "heat_tolerance": {
+      "value": "low",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "v2"
+      ],
+      "evidence": "생육 적온 20℃ 안팎(15~25℃), 여름엔 생육이 저조하다. 35℃ 이상 생육 장해."
+    },
+    "watering_interval_days": {
+      "value": 3,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "생육 초기엔 일주일에 두 번 땅속 깊이 스며들게."
+    },
+    "water_need": {
+      "value": "low",
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v3"
+      ],
+      "evidence": "습해에 약해 배수가 중요하다(농사로). 건조에는 잘 버티지만 과습에 매우 약하다(농사친구)."
+    },
+    "rain_wait_condition": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    }
+  },
+  "calendars": [
+    {
+      "region": "중부",
+      "cropping_type": "봄 재배",
+      "activity": "sow",
+      "start": "03-01",
+      "end": "04-30",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "region": "중부",
+      "cropping_type": "봄 재배",
+      "activity": "transplant",
+      "start": "05-01",
+      "end": "06-30",
+      "refs": [
+        "r1",
+        "v3"
+      ]
+    },
+    {
+      "region": "중부",
+      "cropping_type": "봄 재배",
+      "activity": "harvest",
+      "start": "09-15",
+      "end": "04-30",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "region": "중부",
+      "cropping_type": "가을 재배",
+      "activity": "sow",
+      "start": "08-25",
+      "end": "09-20",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "region": "중부",
+      "cropping_type": "가을 재배",
+      "activity": "transplant",
+      "start": "10-01",
+      "end": "11-30",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "region": "중부",
+      "cropping_type": "가을 재배",
+      "activity": "harvest",
+      "start": "04-15",
+      "end": "05-31",
+      "refs": [
+        "r1"
+      ]
+    }
+  ],
+  "fertilizer": {
+    "base": {
+      "compost_kg_per_10a": 1500,
+      "lime_kg_per_10a": 200,
+      "note": "거름을 많이 먹는 작물. 심기 한 달 전 석회, 2주 전 퇴비, 일주일 전 비료(농사친구).",
+      "refs": [
+        "r1",
+        "v3"
+      ]
+    },
+    "top_dressing": [
+      {
+        "days_after_planting": 30,
+        "note": "1차 웃거름(질소·칼리 비료), 첫 북주기(정식 40일쯤, 5cm)와 함께.",
+        "refs": [
+          "v3"
+        ]
+      },
+      {
+        "days_after_planting": 60,
+        "note": "2차 웃거름, 두 번째 북주기(10cm).",
+        "refs": [
+          "v3"
+        ]
+      },
+      {
+        "days_after_planting": 120,
+        "note": "3차 웃거름. 여름이 지나 9월에 다시 자랄 때, 북주기 15cm.",
+        "refs": [
+          "v3",
+          "v2"
+        ]
+      }
+    ]
+  },
+  "guides": [
+    {
+      "section": "소개",
+      "body": "중국 서북부가 원산이다. 발아 적온 15~25℃, 생육 적온 20℃ 안팎이고 5℃ 이하·35℃ 이상에서 장해를 입는다. 흰 부분(연백부)이 길수록 좋은 파다.\n\n시장의 외대파는 노지 월동이 어렵고, 키가 작은 조선대파는 추운 곳에서도 월동한다.",
+      "refs": [
+        "r1",
+        "v1",
+        "v3"
+      ]
+    },
+    {
+      "section": "밭 준비",
+      "body": "- 물 빠짐이 가장 중요하다. 두둑을 30cm 이상 높이고 굵은 흙을 섞는다.\n- 심기 한 달 전 석회, 2주 전 퇴비, 일주일 전 밑거름 비료.\n- pH 6~7. 거름을 넉넉히 넣는다.",
+      "refs": [
+        "r1",
+        "r2",
+        "v3"
+      ]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 파종: 봄 3월 중순~4월 초, 가을 8월 하순~9월 초. 흙을 5mm쯤 얇게 덮는다.\n- 모종: 50~60일 키워 5~6월에 옮긴다. 사서 심어도 좋다. 줄기가 곧고 잔뿌리가 많은 모종을 고른다.\n- 심기: 흰 부분까지 묻히게 10cm 간격으로, 한 구멍에 2~4개를 함께 심어도 된다. 윗부분은 잘라 심어도 괜찮다.",
+      "refs": [
+        "r1",
+        "r2",
+        "v3"
+      ]
+    },
+    {
+      "section": "관리",
+      "body": "- 북주기: 정식 40일쯤 5cm, 한 달 뒤 10cm, 9월 이후 15cm로 점점 늘린다. 처음부터 높게 쌓으면 뿌리에 좋지 않다.\n- 웃거름: 한 달 간격으로, 북주기와 함께.\n- 물: 초기엔 일주일에 두 번 깊이. 고이지 않게.\n- 여름을 나며 지친 파는 9월에 캐서 시든 잎을 정리하고 잎을 잘라 새 거름 넣은 자리에 다시 심으면 가을에 굵어진다.",
+      "refs": [
+        "r1",
+        "r2",
+        "v1",
+        "v2",
+        "v3"
+      ]
+    },
+    {
+      "section": "병해충",
+      "body": "- 파굴파리: 잎 속을 줄무늬처럼 파먹는다. 초여름~초가을.\n- 파밤나방: 여름~가을. 잎 속으로 들어가기 전에 방제하고, 성분이 다른 약을 번갈아 쓴다.\n- 파총채벌레: 건조할 때 많다. 물을 주어 마르지 않게.\n- 고자리파리: 가을에 다시 활동해 뿌리를 해친다.\n- 약은 대파에 등록된 제품인지 확인한다.",
+      "refs": [
+        "r1",
+        "v2"
+      ]
+    },
+    {
+      "section": "수확",
+      "body": "- 정식 40~50일 뒤부터 필요할 때 뽑아 쓴다.\n- 겨울엔 잎이 마르니 땅이 얼기 전에 거두거나, 이듬해 봄 꽃대가 오르기 전에 거둔다.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "key": "r1",
+      "kind": "doc",
+      "title": "텃밭가꾸기 - 대파 (도시농업 텃밭채소)",
+      "url": "https://www.nongsaro.go.kr/portal/ps/psz/psza/contentSub.ps?menuId=PS00199&cntntsNo=228668",
+      "publisher": "농촌진흥청 농사로"
+    },
+    {
+      "key": "r2",
+      "kind": "doc",
+      "title": "텃밭에서 대파 키우기 (2021년 6월호)",
+      "url": "https://www.rda.go.kr/webzine/2021/06/sub4-2.html",
+      "publisher": "농촌진흥청 웹진 (국립원예특작과학원 도시농업과 자료)"
+    },
+    {
+      "key": "v1",
+      "kind": "video",
+      "title": "가을 대파 옮겨심기 - 대파 길고 굵게 기르려면 꼭 해줘야 할 것들",
+      "url": "https://www.youtube.com/watch?v=UbqBw4HMxfk",
+      "publisher": "광닭이",
+      "summary": "여름·장마를 지나 지친 대파를 삽으로 떠서 뿌리를 살려 캐고, 시든 잎을 정리한 뒤 흰 부분 위를 잘라 다시 심어 새 잎을 키운다. 대파는 한두 번 옮겨 심으며 굵고 길게 기른다. 외대파는 노지 월동이 안 되고 조선대파는 된다."
+    },
+    {
+      "key": "v2",
+      "kind": "video",
+      "title": "대파가 잘 안자라는 세가지 이유 - 9월에 이렇게만 해주면 통통하고 깨끗한 대파를 봄까지",
+      "url": "https://www.youtube.com/watch?v=52rM2Ed1JCo",
+      "publisher": "광닭이",
+      "summary": "잘 안 자라는 이유: 4개월이 지나 거름이 떨어짐(다비성), 여름 더위(15~25℃를 좋아해 9~10월이 최적), 병해충(가을에 깨어나는 고자리파리 등). 9월에 옮겨 심으며 밑거름·칼슘을 새로 넣거나 북주기를 한다."
+    },
+    {
+      "key": "v3",
+      "kind": "video",
+      "title": "대파심기 이렇게 쉬운거였어?? 5분안에 A부터 Z까지 모두 알려드립니다",
+      "url": "https://www.youtube.com/watch?v=96dy1amc4b0",
+      "publisher": "농사친구",
+      "summary": "외대파(봄)와 조선대파(가을·월동). 석회 한 달 전·퇴비 2주 전·비료 일주일 전, 두둑 30cm 이상(과습에 약함). 3월 중순~4월 초 파종, 50일 이상 키운 모종을 5~6월 정식, 구멍 10~15cm·줄 20cm, 흰 부분까지 묻게 심기. 웃거름은 한 달 뒤부터, 북주기는 정식 40일 5cm → 한 달 뒤 10cm → 9월 이후 15cm. 자사 제품 홍보 포함."
+    }
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "name": "돌산갓",
+  "category": "잎채소",
+  "summary": "여수 돌산에서 재배해 온 갓. 잎과 줄기가 연하고 매운맛이 덜해 김치에 많이 쓴다. 씨를 밭에 줄뿌림해 40~60일이면 거둔다. 따뜻한 남쪽에서는 월동 재배도 한다.",
+  "family": {
+    "value": "십자화과",
+    "confidence": "high",
+    "refs": [
+      "r3"
+    ],
+    "evidence": "학명 Brassica juncea(농사로 갓)."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "direct",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r3"
+      ],
+      "evidence": "노지 직파, 두둑에 줄뿌림. 시설에서는 본잎 3~4장 모종을 옮기기도 한다(여수시농업기술센터)."
+    },
+    "season": {
+      "value": "autumn",
+      "confidence": "medium",
+      "refs": [
+        "r2",
+        "r4"
+      ],
+      "evidence": "8월 중·하순~10월 상·중순 가을 재배가 수량·품질이 좋다. 봄·여름·월동 재배도 가능."
+    },
+    "seedling_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "min_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "max_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "late_frost_sensitive": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "days_to_harvest": {
+      "value": 50,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r3",
+        "r4"
+      ],
+      "evidence": "파종 후 40~60일(농진청 웹진, 농사로). 여름·가을 갓 40~50일, 봄 갓 60일, 월동 갓 90~120일(여수시농업기술센터)."
+    },
+    "harvest_window_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rotation_risk": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rest_seasons": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "overwinter_default": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_avoid_rain": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "schedule_tolerance_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plant_spacing_cm": {
+      "value": 10,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r3"
+      ],
+      "evidence": "10cm 정도로 밀식(농진청 웹진), 포기 사이 9~12cm로 조금 웃자라게(농사로)."
+    },
+    "row_spacing_cm": {
+      "value": 30,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r3"
+      ],
+      "evidence": "120cm 두둑에 30cm 간격 4줄로 줄뿌림."
+    },
+    "plants_per_pyeong": {
+      "value": 110,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r3"
+      ],
+      "evidence": "줄 30cm × 포기 10cm 기준 계산값."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "솎아 가며 포기째 거둔다."
+    },
+    "pruning_method": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "pruning_timing": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "heat_tolerance": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "watering_interval_days": {
+      "value": 3,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r3"
+      ],
+      "evidence": "가물 때 3~4일 간격으로 충분히(3.3㎡에 10L 정도)."
+    },
+    "water_need": {
+      "value": "high",
+      "confidence": "medium",
+      "refs": [
+        "r3",
+        "v1"
+      ],
+      "evidence": "보수력 좋은 땅을 좋아하고, 물이 부족하면 쓴맛·매운맛이 강해진다(광닭이)."
+    },
+    "rain_wait_condition": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    }
+  },
+  "calendars": [
+    {
+      "region": "전국",
+      "cropping_type": "가을 재배",
+      "activity": "sow",
+      "start": "08-15",
+      "end": "10-15",
+      "refs": [
+        "r2",
+        "r4"
+      ]
+    },
+    {
+      "region": "남부",
+      "cropping_type": "월동 재배",
+      "activity": "sow",
+      "start": "10-21",
+      "end": "12-10",
+      "refs": [
+        "r2",
+        "r4"
+      ]
+    },
+    {
+      "region": "전국",
+      "cropping_type": "봄 재배",
+      "activity": "sow",
+      "start": "02-21",
+      "end": "03-20",
+      "refs": [
+        "r2"
+      ]
+    }
+  ],
+  "fertilizer": {
+    "base": {
+      "compost_kg_per_10a": 2000,
+      "lime_kg_per_10a": 152,
+      "note": "퇴비 10a당 2,000kg(여수시농업기술센터), 3.3㎡당 석회 500g·붕사 3g은 파종 14일 전(농사로). 산성 토양에 약하다.",
+      "refs": [
+        "r2",
+        "r3"
+      ]
+    },
+    "top_dressing": [
+      {
+        "days_after_planting": 20,
+        "note": "파종 20일쯤 1회. 흙이 마르면 요소 0.2~0.5% 물비료로. 웃거름 뒤엔 꼭 물을 준다.",
+        "refs": [
+          "r2",
+          "r3"
+        ]
+      }
+    ]
+  },
+  "guides": [
+    {
+      "section": "소개",
+      "body": "중앙아시아~히말라야가 원산인 십자화과 갓 가운데, 여수 돌산 지역에서 재배해 온 품종군이다. 잎이 넓고 연하며 매운맛과 섬유질이 적어 김치로 많이 담근다. 비타민 A(카로틴), 칼슘, 철이 많다.\n\n싹트는 온도는 6~35℃로 넓고(최적 25℃) 낮 20℃에서 잘 자란다. 내한성이 약해 남부 해안 외에는 노지 월동이 어렵다.",
+      "refs": [
+        "r1",
+        "r3"
+      ]
+    },
+    {
+      "section": "밭 준비",
+      "body": "- 유기물이 많고 물을 잘 머금는 땅. 산성 땅에 약하니 파종 2주 전 석회를 뿌린다.\n- 퇴비를 넉넉히(1㎡당 4kg 안팎) 넣고 120cm 두둑을 만든다.",
+      "refs": [
+        "r1",
+        "r2",
+        "r3"
+      ]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 시기: 가을 8월 중순~10월 중순이 가장 좋다. 남부 월동 재배는 10월 하순~12월 초.\n- 120cm 두둑에 30cm 간격으로 4줄 골을 내고 줄뿌림한다. 지주대를 눕혀 눌러 골을 내면 깊이가 고르다.\n- 골에 먼저 물을 흠뻑 주고 씨를 뿌린 뒤 마른 흙을 얇게 덮는다. 싹 트기 전엔 물을 주지 않거나 분무기로만 준다.\n- 6~7일이면 싹이 튼다.",
+      "refs": [
+        "r1",
+        "r2",
+        "r3",
+        "v2"
+      ]
+    },
+    {
+      "section": "관리",
+      "body": "- 솎기: 잎이 2~3장일 때 포기 사이 9~12cm로. 빽빽한 곳 위주로 두 번쯤.\n- 웃거름: 파종 20일쯤 한 번, 준 뒤 꼭 물을 준다.\n- 물: 가물면 3~4일 간격으로 충분히. 물이 부족하면 쓴맛이 강해진다.\n- 파종 직후 망사(부직포)를 씌워 해충을 막는다.",
+      "refs": [
+        "r1",
+        "r3",
+        "v1"
+      ]
+    },
+    {
+      "section": "병해충",
+      "body": "- 배추좀나방이 가장 문제다. 1년에 10회 넘게 생기고 약에 내성이 있어 망사 씌우기가 가장 좋은 방법이다.\n- 벼룩잎벌레, 나비 애벌레도 주의.\n- 병: 바이러스병, 무름병. 미량요소 결핍이 생기기도 한다.",
+      "refs": [
+        "r1",
+        "r3"
+      ]
+    },
+    {
+      "section": "수확",
+      "body": "- 파종 후 40~60일, 50cm 안팎일 때. 수확 10일 전 흐린 날 망사를 벗겨 굳힌다.\n- 큰 것부터 솎듯이 차례로 거둔다.",
+      "refs": [
+        "r1",
+        "r3",
+        "r4"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "key": "r1",
+      "kind": "doc",
+      "title": "텃밭에서 돌산갓 키우기 (2021년 1월호)",
+      "url": "https://www.rda.go.kr/webzine/2021/01/sub4-2.html",
+      "publisher": "농촌진흥청 웹진 (국립원예특작과학원 도시농업과 자료)"
+    },
+    {
+      "key": "r2",
+      "kind": "doc",
+      "title": "돌산갓 재배기술",
+      "url": "https://www.yeosu.go.kr/agr/info/dolsangat/technique",
+      "publisher": "여수시농업기술센터"
+    },
+    {
+      "key": "r3",
+      "kind": "doc",
+      "title": "텃밭가꾸기 - 갓 (돌산갓 포함)",
+      "url": "https://www.nongsaro.go.kr/portal/ps/psz/psza/contentSub.ps?menuId=PS00199&cntntsNo=101637",
+      "publisher": "농촌진흥청 농사로"
+    },
+    {
+      "key": "r4",
+      "kind": "video",
+      "title": "갓 재배기술",
+      "url": "https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?mvpNo=698",
+      "publisher": "여수시농업기술센터 (농사로)",
+      "summary": "가을 재배는 8월 중·하순~10월 상·중순, 월동 재배는 10월 하순~12월 초(11월 중·하순까지 권장) 파종. 솎음은 빽빽한 곳 위주로 2회, 엽면시비는 요소 0.2~0.5%. 봄 갓 60일, 여름·가을 갓 40~50일, 월동 갓 90~120일에 수확."
+    },
+    {
+      "key": "v1",
+      "kind": "video",
+      "title": "청갓 홍갓 돌산갓 재배 세가지 꿀팁! - 시원한 맛을 내는 방법, 연하게 키우는 방법, 수확량 늘리는 방법",
+      "url": "https://www.youtube.com/watch?v=aQEOT-JJi3Y",
+      "publisher": "광닭이",
+      "summary": "물이 부족하면 쓴맛·매운맛이 세진다. 지주대로 골을 눌러 내고, 씨 뿌리기 전에 골에 물을 흠뻑 준 뒤 싹 날 때까지는 물을 주지 않거나 분무기로. 젖은 흙 대신 마른 흙을 덮고, 얇은 부직포로 덮으면 좋다."
+    },
+    {
+      "key": "v2",
+      "kind": "video",
+      "title": "청갓 적갓 돌산갓 이렇게 파종하세요.",
+      "url": "https://www.youtube.com/watch?v=hWySbUT5brc",
+      "publisher": "광닭이",
+      "summary": "지주대를 눕혀 눌러 골을 내면 깊이가 고르다. 파종 전 골에 물을 충분히 주고 싹 날 때까지는 분무기로만. 마른 흙을 덮고 부직포를 씌운다."
+    }
+  ]
+}

@@ -1,0 +1,267 @@
+{
+  "name": "냉이",
+  "category": "나물",
+  "summary": "봄나물로 먹는 냉이를 텃밭에 직접 기른다. 9월에 아주 작은 씨를 흙과 섞어 흩어 뿌리면 겨울을 나고 이듬해 봄까지 거둘 수 있다. 거름은 퇴비 위주로 충분하다.",
+  "family": {
+    "value": null,
+    "confidence": "low",
+    "refs": [],
+    "evidence": "출처에서 과명을 확인하지 못함(식물 분류상 십자화과 Capsella bursa-pastoris)."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "direct",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "흩어 뿌리기, 흙은 덮지 않는다(농사로). 씨가 아주 작아 흙과 섞어 흩어 뿌린다(광닭이)."
+    },
+    "season": {
+      "value": "overwinter",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "9월에 뿌려 11월~이듬해 4월 수확. 월동하면 맛과 향이 좋아진다."
+    },
+    "seedling_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "직파 작물."
+    },
+    "min_temp_c": {
+      "value": 15,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "파종 적합일 판정용. 생육 적온 15~25℃(농사로), 15℃ 이하로 떨어지면 싹이 트지 않는다(광닭이)."
+    },
+    "max_temp_c": {
+      "value": 25,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "생육 적온 상한 25℃(농사로). 기온이 25℃ 아래로 내려간 뒤 뿌리라고 권한다(광닭이)."
+    },
+    "late_frost_sensitive": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "days_to_harvest": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_window_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rotation_risk": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rest_seasons": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "overwinter_default": {
+      "value": "keep",
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "v1"
+      ],
+      "evidence": "가을에 뿌려 이듬해 4월까지 거두므로 겨울 동안 자리를 유지한다."
+    },
+    "harvest_avoid_rain": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "schedule_tolerance_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plant_spacing_cm": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "흩어 뿌린 뒤 3~4cm로 솎는다(농사로). 두 번째 출처 없음."
+    },
+    "row_spacing_cm": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plants_per_pyeong": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "포기째 캐서 먹는다."
+    },
+    "pruning_method": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "pruning_timing": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "heat_tolerance": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "watering_interval_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "water_need": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_condition": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    }
+  },
+  "calendars": [
+    {
+      "region": "중부",
+      "cropping_type": "월동 재배",
+      "activity": "sow",
+      "start": "09-01",
+      "end": "09-25",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "region": "중부",
+      "cropping_type": "월동 재배",
+      "activity": "harvest",
+      "start": "11-01",
+      "end": "04-10",
+      "refs": [
+        "r1"
+      ]
+    }
+  ],
+  "fertilizer": {
+    "base": {
+      "compost_kg_per_10a": 3000,
+      "lime_kg_per_10a": 150,
+      "note": "비료는 전량 밑거름(농사로). 양분 요구가 크지 않아 잘 썩은 퇴비만으로 충분하다(광닭이).",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    }
+  },
+  "guides": [
+    {
+      "section": "소개",
+      "body": "들에서 캐던 봄나물을 밭에 뿌려 기른다. 추위에 강하고, 햇빛이 잘 들고 물이 잘 빠지는 기름진 모래참흙에서 잘 자란다. 월동하면 맛과 향이 진해진다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "section": "밭 준비",
+      "body": "- 잘 썩은 퇴비를 넉넉히 넣어 땅을 기름지게 한다. 복합비료는 거의 필요 없다.\n- 이랑 폭 90cm 정도.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 시기: 9월 상순~중하순. 요즘은 9월 초가 너무 더워 기온이 25℃ 아래로 내려간 뒤가 좋다. 15℃ 아래로 떨어지면 싹이 안 트고, 너무 늦으면 뿌리를 못 내려 언다.\n- 씨가 아주 작다. 흙 한 줌에 씨 한두 꼬집만 섞어 흩어 뿌린다(흙과 1:1로 섞으면 너무 많다).\n- 흙은 덮지 않고 손바닥으로 가볍게 다진 뒤 부직포를 덮어 물을 줄 때 씨가 쓸려 가지 않게 한다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "section": "관리",
+      "body": "- 싹이 나면 3~4cm 간격으로 솎는다.\n- 김매기를 두 번쯤 한다.\n- 추운 지역은 부직포를 덮어 겨울을 나게 한다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    },
+    {
+      "section": "수확",
+      "body": "- 11월부터 이듬해 4월까지 뿌리째 캐서 먹는다. 봄에 새순이 오를 때가 가장 맛있다.",
+      "refs": [
+        "r1",
+        "v1"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "key": "r1",
+      "kind": "doc",
+      "title": "농작업일정 - 냉이",
+      "url": "https://www.nongsaro.go.kr/portal/ps/psb/psbl/workScheduleDtl.ps?menuId=PS00087&cntntsNo=30604",
+      "publisher": "농촌진흥청 농사로"
+    },
+    {
+      "key": "v1",
+      "kind": "video",
+      "title": "9월에 심는 냉이와 봄동 배추 - 파종 시기와 주요 재배법 한평만 있어도 꼭 심으세요",
+      "url": "https://www.youtube.com/watch?v=yyFqQA4ND3A",
+      "publisher": "광닭이",
+      "summary": "냉이: 퇴비만으로 충분, 아주 작은 씨는 흙 한 줌에 한두 꼬집만 섞어 흩어 뿌리고 손바닥으로 가볍게 다진 뒤 부직포. 발아 20℃ 안팎·15℃ 이하 불가라 요즘은 9월 중하순 파종. 봄동: 9월 초중순 파종(구멍에 몇 알, 30cm 이상 간격) 또는 9월 하순까지 모종 정식, 추운 곳은 활대 위에 부직포를 덮고 가장자리를 흙으로 막아 월동."
+    }
+  ]
+}

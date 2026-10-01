@@ -1,0 +1,254 @@
+{
+  "name": "청경채",
+  "category": "잎채소",
+  "summary": "중국이 원산인 십자화과 잎채소. 봄·가을에 씨를 뿌려 두 달이면 포기째 거둔다. 서늘한 날씨를 좋아하지만 12~13℃ 아래 저온을 겪은 뒤 더워지면 꽃대가 올라오니 이른 봄 재배는 온도에 주의한다.",
+  "family": {
+    "value": "십자화과",
+    "confidence": "high",
+    "refs": [
+      "r1"
+    ],
+    "evidence": "학명 Brassica campestris ssp. chinensis(농사로)."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "both",
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "직파 또는 육묘(162~200구 트레이, 본잎 3장까지)."
+    },
+    "season": {
+      "value": "autumn",
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "주로 봄과 가을에 뿌린다. 중북부는 노지 월동이 안 된다."
+    },
+    "seedling_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "min_temp_c": {
+      "value": 13,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "파종·정식 적합일 판정용. 12~13℃ 이하 저온에 감응해 꽃눈이 생긴 뒤 고온이면 추대한다(농사로, 농진청 웹진). 싹트는 온도 15~20℃."
+    },
+    "max_temp_c": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "late_frost_sensitive": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "days_to_harvest": {
+      "value": 60,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "파종 후 일수. 봄·가을 60일, 여름 40~45일, 겨울 90~120일."
+    },
+    "harvest_window_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rotation_risk": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rest_seasons": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "overwinter_default": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "harvest_avoid_rain": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "rain_wait_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "schedule_tolerance_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "plant_spacing_cm": {
+      "value": 15,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "주 간격 15cm에 2~3알씩."
+    },
+    "row_spacing_cm": {
+      "value": 15,
+      "confidence": "high",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "줄 간격 15cm, 이랑 폭 120~150cm."
+    },
+    "plants_per_pyeong": {
+      "value": 146.7,
+      "confidence": "medium",
+      "refs": [
+        "r1",
+        "r2"
+      ],
+      "evidence": "15×15cm 기준 계산값."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "포기째 수확하는 잎채소."
+    },
+    "pruning_method": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "pruning_timing": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "가지치기 대상 아님."
+    },
+    "heat_tolerance": {
+      "value": "medium",
+      "confidence": "medium",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "잘 자라는 온도 낮 20~25℃. 한여름엔 저녁에 심고 3~5일 차광해야 한다."
+    },
+    "watering_interval_days": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    },
+    "water_need": {
+      "value": "medium",
+      "confidence": "medium",
+      "refs": [
+        "r1"
+      ],
+      "evidence": "고온 건조기에 칼슘 결핍이 생기니 물 관리를 잘 한다. 배수가 나쁘면 병이 생긴다."
+    },
+    "rain_wait_condition": {
+      "value": null,
+      "confidence": "low",
+      "refs": [],
+      "evidence": "출처 없음."
+    }
+  },
+  "calendars": [],
+  "fertilizer": {
+    "base": {
+      "compost_kg_per_10a": 1515,
+      "lime_kg_per_10a": 152,
+      "note": "3.3㎡당 퇴비 5kg, 고토석회 500g(밭갈기 2~3주 전). 비료는 전량 밑거름. 질소가 많으면 세균성 썩음병이 생기기 쉽다.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    }
+  },
+  "guides": [
+    {
+      "section": "소개",
+      "body": "중국 원산의 십자화과 잎채소(팍초이)다. 싹트는 온도 15~20℃, 잘 자라는 온도 낮 20~25℃이고 상추를 기를 정도의 빛이면 충분하다. 비타민 C와 칼슘이 많다.",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "section": "밭 준비",
+      "body": "- 유기물이 많고 물이 잘 빠지는 곳, pH 6.5~7.0.\n- 밭갈기 2~3주 전 3.3㎡당 퇴비 5kg, 고토석회 500g을 넣고 비료는 모두 밑거름으로 준다.\n- 이랑 폭 120~150cm, 검은 비닐 멀칭.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 봄·가을에 줄 15cm × 포기 15cm 간격으로 2~3알씩 뿌린다. 3~4일이면 싹이 튼다.\n- 모종을 기를 땐 본잎 3장까지 키워 옮긴다. 늦게 옮기면 웃자라 병에 약해진다.\n- 여름엔 저녁에 심고 3~5일 차광망을 씌운다.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "section": "병해충",
+      "body": "- 생리장해: 칼슘 결핍(고온 건조기).\n- 병: 노균병, 무름병. 배수가 나쁘면 잘 생긴다.\n- 해충: 진딧물, 배추좀나방.",
+      "refs": [
+        "r1"
+      ]
+    },
+    {
+      "section": "수확",
+      "body": "- 파종 후 봄·가을 60일, 여름 40~45일, 겨울 90~120일.\n- 밑동을 잘라 포기째 거둔다.",
+      "refs": [
+        "r1",
+        "r2"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "key": "r1",
+      "kind": "doc",
+      "title": "텃밭가꾸기 - 청경채",
+      "url": "https://www.nongsaro.go.kr/portal/ps/psz/psza/contentSub.ps?menuId=PS00199&cntntsNo=101638",
+      "publisher": "농촌진흥청 농사로"
+    },
+    {
+      "key": "r2",
+      "kind": "doc",
+      "title": "텃밭에서 청경채 키우기 (2021년 12월호)",
+      "url": "https://www.rda.go.kr/webzine/2021/12/sub4-2.html",
+      "publisher": "농촌진흥청 웹진 (국립원예특작과학원 도시농업과 자료)"
+    }
+  ]
+}
