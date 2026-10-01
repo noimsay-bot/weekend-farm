@@ -102,7 +102,7 @@ export async function loadDashboard(db: SupabaseClient, farmId: string, today: s
     db.from("field_beds").select("id, kind, x_cm, y_cm, w_cm, h_cm, label").eq("farm_id", farmId),
     db
       .from("plan_bed_plantings")
-      .select("id, bed_id, crop_id, rows, start_cm, length_cm, plant_count, carried_from_planting_id")
+      .select("id, bed_id, crop_id, rows, layout, method, start_cm, length_cm, plant_count, carried_from_planting_id")
       .eq("plan_id", shown.id),
   ]);
 

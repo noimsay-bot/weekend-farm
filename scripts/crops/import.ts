@@ -31,7 +31,7 @@ async function importCrop(db: SupabaseClient, doc: CropDoc) {
   );
 
   // crops 칸
-  const update: Record<string, unknown> = { description: doc.summary, category: doc.category, source_url: firstDoc };
+  const update: Record<string, unknown> = { description: doc.summary, category: doc.category, sow_pattern: doc.sow_pattern ?? null, source_url: firstDoc };
   if (!manual.has("family_id")) {
     let familyId: string | null = null;
     if (typeof doc.family.value === "string") {
@@ -56,7 +56,8 @@ async function importCrop(db: SupabaseClient, doc: CropDoc) {
       origin: "ai_research",
       confidence: f.confidence,
       ref_keys: f.refs,
-      approved: false,
+      // 이미 승인된 작물은 다시 넣어도 값이 있는 항목의 승인을 유지한다
+      approved: crop!.status === "confirmed" && f.value !== null,
       manual_input: false,
     }));
   if (sources.length) await must(db.from("crop_field_sources").insert(sources));

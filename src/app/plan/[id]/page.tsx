@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { seasonLabel, type PlanSeason } from "@/lib/season";
 import { Screen } from "@/components/ui";
 import { PlanEditor, type EditorData } from "./PlanEditor";
-import { BedPlanEditor } from "./BedPlanEditor";
+import { BedPlanEditor, type BedEditorData } from "./BedPlanEditor";
 import type { Bed, BedPlanting } from "@/lib/field/beds";
 import { inMonthDayRange } from "@/lib/dates";
 import { referenceLine, type SeasonSummary } from "@/lib/summary/build";
@@ -67,7 +67,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
       supabase.auth.getClaims(),
       supabase.from("farm_settings").select("cell_size_m").eq("farm_id", plan.farm_id).single(),
       supabase.from("field_plan_cells").select("id, x, y, crop_id, companion_crop_id, carry_state, rotation_flag").eq("plan_id", id),
-      supabase.from("crops").select("id, name, family_id, plants_per_pyeong, plant_spacing_cm, heat_tolerance, crop_tag_map(tag_id)").order("name"),
+      supabase.from("crops").select("id, name, family_id, plants_per_pyeong, plant_spacing_cm, row_spacing_cm, sow_method, sow_pattern, heat_tolerance, crop_tag_map(tag_id)").order("name"),
       supabase.from("crop_tags").select("id, name").order("name"),
       supabase.from("crop_companions").select("crop_a_id, crop_b_id, relation, reason, source_text, source_url"),
       supabase
@@ -84,7 +84,7 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
       supabase.from("field_beds").select("id, kind, x_cm, y_cm, w_cm, h_cm, label").eq("farm_id", plan.farm_id).order("created_at"),
       supabase
         .from("plan_bed_plantings")
-        .select("id, bed_id, crop_id, rows, start_cm, length_cm, plant_count, carried_from_planting_id")
+        .select("id, bed_id, crop_id, rows, layout, method, start_cm, length_cm, plant_count, carried_from_planting_id")
         .eq("plan_id", id)
         .order("created_at"),
     ]);
@@ -157,6 +157,12 @@ export default async function PlanPage({ params }: PageProps<"/plan/[id]">) {
               beds: (beds.data ?? []) as Bed[],
               bedPlantings: (bedPlantings.data ?? []) as BedPlanting[],
               spacing: Object.fromEntries((crops.data ?? []).map((c) => [c.id, c.plant_spacing_cm === null ? null : Number(c.plant_spacing_cm)])),
+              sowing: Object.fromEntries(
+                (crops.data ?? []).map((c) => [
+                  c.id,
+                  { sowMethod: c.sow_method, pattern: c.sow_pattern, rowSpacing: c.row_spacing_cm === null ? null : Number(c.row_spacing_cm) },
+                ]),
+              ) as BedEditorData["sowing"],
             }}
           />
         ) : (

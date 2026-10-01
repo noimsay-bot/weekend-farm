@@ -8,11 +8,21 @@ export type BedPlanting = {
   bed_id: string;
   crop_id: string;
   rows: number;
+  // 여러 줄일 때 parallel(양옆 나란히) / staggered(줄끼리 엇갈려)
+  layout: RowLayout;
+  method: SowPattern;
   start_cm: number;
   length_cm: number | null;
   plant_count: number | null;
   carried_from_planting_id: string | null;
 };
+
+export type RowLayout = "parallel" | "staggered";
+// plant 모종 정식 / row 줄뿌림 / hill 점뿌림 / broadcast 흩어뿌림
+export type SowPattern = "plant" | "row" | "hill" | "broadcast";
+export const SOW_PATTERN_LABEL: Record<SowPattern, string> = { plant: "모종 심기", row: "줄뿌림", hill: "점뿌림", broadcast: "흩어뿌림" };
+// 줄뿌림·흩어뿌림은 포기 수를 세지 않는다.
+export const countsPlants = (m: SowPattern) => m === "plant" || m === "hill";
 
 export type Rect = { x0: number; y0: number; x1: number; y1: number };
 
@@ -45,7 +55,8 @@ export function segmentCells(r: Rect, cellCm: number): { x: number; y: number }[
 }
 
 // 포기 수 자동 계산: 두둑은 줄 수 × (구간 길이 / 포기 간격), 네모 밭은 가로·세로로 포기 간격만큼.
-export function autoPlantCount(b: Bed, p: Pick<BedPlanting, "rows" | "start_cm" | "length_cm">, spacingCm: number | null): number | null {
+export function autoPlantCount(b: Bed, p: Pick<BedPlanting, "rows" | "start_cm" | "length_cm"> & { method?: SowPattern }, spacingCm: number | null): number | null {
+  if (p.method && !countsPlants(p.method)) return null;
   if (!spacingCm || spacingCm <= 0) return null;
   const r = segmentRect(b, p);
   const w = r.x1 - r.x0;
@@ -55,9 +66,33 @@ export function autoPlantCount(b: Bed, p: Pick<BedPlanting, "rows" | "start_cm" 
   return p.rows * Math.max(1, Math.floor(along / spacingCm));
 }
 
-export const plantCountOf = (b: Bed, p: BedPlanting, spacingCm: number | null) => p.plant_count ?? autoPlantCount(b, p, spacingCm) ?? 0;
+export const plantCountOf = (b: Bed, p: BedPlanting, spacingCm: number | null) =>
+  countsPlants(p.method) ? (p.plant_count ?? autoPlantCount(b, p, spacingCm) ?? 0) : 0;
 
-// 그림용 포기 위치. 두둑은 줄마다 고르게, 네모 밭은 정사각에 가깝게 배치.
+// 줄뿌림 줄 수: 두둑 폭을 적정 줄간격으로 나눈 값 (1~12).
+export const autoRowCount = (b: Pick<Bed, "w_cm" | "h_cm">, rowSpacingCm: number | null) =>
+  rowSpacingCm && rowSpacingCm > 0 ? Math.min(12, Math.max(1, Math.floor(bedWidth(b) / rowSpacingCm))) : null;
+
+// 줄뿌림 그림용: 줄마다 구간 양 끝을 잇는 선.
+export function sowLines(b: Bed, p: BedPlanting): { x1: number; y1: number; x2: number; y2: number }[] {
+  const r = segmentRect(b, p);
+  const rows = Math.max(1, p.rows);
+  return Array.from({ length: rows }, (_, i) => {
+    const t = (i + 0.5) / rows;
+    return isVertical(b)
+      ? { x1: r.x0 + t * (r.x1 - r.x0), y1: r.y0, x2: r.x0 + t * (r.x1 - r.x0), y2: r.y1 }
+      : { x1: r.x0, y1: r.y0 + t * (r.y1 - r.y0), x2: r.x1, y2: r.y0 + t * (r.y1 - r.y0) };
+  });
+}
+
+// 흩어뿌림 그림용: 구간 안에 고르게 흩어진 점 (매번 같은 모양이 나오도록 고정된 난수).
+export function scatterPoints(r: Rect, n: number): { x: number; y: number }[] {
+  let seed = 7;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  return Array.from({ length: n }, () => ({ x: r.x0 + (0.06 + 0.88 * rand()) * (r.x1 - r.x0), y: r.y0 + (0.08 + 0.84 * rand()) * (r.y1 - r.y0) }));
+}
+
+// 그림용 포기 위치. 두둑은 줄마다 고르게(엇갈려 심기면 줄마다 반 간격씩 어긋나게), 네모 밭은 정사각에 가깝게 배치.
 export function plantPositions(b: Bed, p: BedPlanting, count: number): { x: number; y: number }[] {
   const r = segmentRect(b, p);
   const w = r.x1 - r.x0;
@@ -82,7 +117,8 @@ export function plantPositions(b: Bed, p: BedPlanting, count: number): { x: numb
     const j = Math.floor(i / rows);
     const n = row < count - (perRow - 1) * rows ? perRow : perRow - 1;
     const across = (row + 0.5) / rows;
-    const along = (j + 0.5) / Math.max(1, n);
+    const offset = p.layout === "staggered" && rows > 1 ? (row % 2 ? 0.75 : 0.25) : 0.5;
+    const along = (j + offset) / Math.max(1, n);
     out.push(isVertical(b) ? { x: r.x0 + across * w, y: r.y0 + along * h } : { x: r.x0 + along * w, y: r.y0 + across * h });
   }
   return out;

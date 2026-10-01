@@ -51,6 +51,8 @@ export type GuideSection = (typeof GUIDE_SECTIONS)[number];
 export type CropDoc = {
   name: string;
   category: string;
+  // 직파 작물의 기본 파종 방식: row 줄뿌림 / hill 점뿌림 / broadcast 흩어뿌림
+  sow_pattern?: "row" | "hill" | "broadcast";
   summary: string;
   family: CropField; // 과 이름 (예: 십자화과)
   fields: Record<string, CropField>;
@@ -98,6 +100,7 @@ export function validateCropDoc(doc: CropDoc): string[] {
 
   if (!doc.name?.trim()) errors.push("name 없음");
   if (!doc.summary?.trim()) errors.push("summary 없음");
+  if (doc.sow_pattern !== undefined && !["row", "hill", "broadcast"].includes(doc.sow_pattern)) errors.push("sow_pattern: row/hill/broadcast 중 하나");
   if (new Set(doc.refs.map((r) => r.key)).size !== doc.refs.length) errors.push("refs: 키 중복");
   for (const r of doc.refs) {
     if (!/^https?:\/\//.test(r.url)) errors.push(`refs.${r.key}: url 형식`);

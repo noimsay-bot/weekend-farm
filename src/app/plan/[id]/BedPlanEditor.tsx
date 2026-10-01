@@ -4,7 +4,21 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { autoPlantCount, bedLength, isVertical, plantCountOf, segmentCells, segmentRect, type Bed, type BedPlanting } from "@/lib/field/beds";
+import {
+  autoPlantCount,
+  autoRowCount,
+  bedLength,
+  bedWidth,
+  countsPlants,
+  isVertical,
+  plantCountOf,
+  segmentCells,
+  segmentRect,
+  SOW_PATTERN_LABEL,
+  type Bed,
+  type BedPlanting,
+  type SowPattern,
+} from "@/lib/field/beds";
 import { toneMap } from "@/lib/field/colors";
 import { seasonOf, todayKst } from "@/lib/season";
 import { FieldMap } from "@/components/FieldMap";
@@ -19,7 +33,25 @@ export type BedEditorData = EditorData & {
   beds: Bed[];
   bedPlantings: BedPlanting[];
   spacing: Record<string, number | null>;
+  sowing: Record<string, Sowing>;
 };
+
+type Sowing = { sowMethod: "direct" | "transplant" | "both" | null; pattern: Exclude<SowPattern, "plant"> | null; rowSpacing: number | null };
+
+// 자료에 줄간격이 없을 때 줄뿌림 줄 수 계산에 쓰는 값
+const FALLBACK_ROW_SPACING = 20;
+
+// 작물에 고를 수 있는 심기 방식. 모종만 쓰는 작물은 모종 심기뿐, 직파 작물은 파종 방식 셋.
+function patternsFor(s: Sowing | undefined): SowPattern[] {
+  if (!s || s.sowMethod === "transplant" || s.sowMethod === null) return ["plant"];
+  return s.sowMethod === "both" ? ["plant", "row", "hill", "broadcast"] : ["row", "hill", "broadcast"];
+}
+
+function rowsFor(bed: Bed, method: SowPattern, s: Sowing | undefined, current: number) {
+  if (bed.kind === "plot" || method === "broadcast") return 1;
+  if (method === "row") return autoRowCount(bed, s?.rowSpacing ?? FALLBACK_ROW_SPACING) ?? 1;
+  return current;
+}
 
 type Mode = "layout" | "plant";
 
@@ -157,13 +189,15 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
     if (!bed) return;
     const used = onBed.reduce((m, p) => Math.max(m, p.start_cm + (p.length_cm ?? bedLength(bed))), 0);
     const start = used >= bedLength(bed) ? 0 : used;
-    const rows = bed.kind === "plot" ? 1 : bedWithRows(bed);
+    const s = data.sowing[cropId];
+    const method: SowPattern = patternsFor(s)[0] === "plant" ? "plant" : (s?.pattern ?? "row");
+    const rows = rowsFor(bed, method, s, bed.kind === "plot" ? 1 : bedWithRows(bed));
     await run(
       () =>
         createClient()
           .from("plan_bed_plantings")
-          .insert({ plan_id: data.plan.id, bed_id: bed.id, crop_id: cropId, rows, start_cm: start, length_cm: start ? bedLength(bed) - start : null })
-          .select("id, bed_id, crop_id, rows, start_cm, length_cm, plant_count, carried_from_planting_id")
+          .insert({ plan_id: data.plan.id, bed_id: bed.id, crop_id: cropId, rows, method, start_cm: start, length_cm: start ? bedLength(bed) - start : null })
+          .select("id, bed_id, crop_id, rows, layout, method, start_cm, length_cm, plant_count, carried_from_planting_id")
           .single(),
       (row) => {
         setBps((ps) => [...ps, row as BedPlanting]);
@@ -179,7 +213,7 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
       () =>
         createClient()
           .from("plan_bed_plantings")
-          .update({ crop_id: next.crop_id, rows: next.rows, start_cm: next.start_cm, length_cm: next.length_cm, plant_count: next.plant_count })
+          .update({ crop_id: next.crop_id, rows: next.rows, layout: next.layout, method: next.method, start_cm: next.start_cm, length_cm: next.length_cm, plant_count: next.plant_count })
           .eq("id", next.id),
       undefined,
       true,
@@ -209,13 +243,18 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
     return out;
   }, [warnings, bps, beds, cellCm]);
 
+  // 작물별 합계: 포기를 세는 심기는 포기 수, 줄뿌림·흩어뿌림은 방식 이름으로 보여준다.
   const totals = useMemo(() => {
-    const m = new Map<string, number>();
+    const m = new Map<string, { n: number; sown: Set<string> }>();
     for (const p of bps) {
       const b = beds.find((x) => x.id === p.bed_id);
-      if (b) m.set(p.crop_id, (m.get(p.crop_id) ?? 0) + plantCountOf(b, p, spacingOf(p.crop_id)));
+      if (!b) continue;
+      const t = m.get(p.crop_id) ?? { n: 0, sown: new Set<string>() };
+      if (countsPlants(p.method)) t.n += plantCountOf(b, p, spacingOf(p.crop_id));
+      else t.sown.add(SOW_PATTERN_LABEL[p.method]);
+      m.set(p.crop_id, t);
     }
-    return [...m];
+    return [...m].map(([id, t]) => [id, [t.n ? `${t.n}포기` : "", ...t.sown].filter(Boolean).join(" · ")] as const);
   }, [bps, beds, spacingOf]);
 
   const tones = toneMap(bps.map((p) => p.crop_id));
@@ -317,6 +356,7 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
               cropName={cropNames[bp.crop_id] ?? ""}
               tone={toneOf(bp.crop_id)}
               spacing={spacingOf(bp.crop_id)}
+              sowing={data.sowing[bp.crop_id]}
               editable={editable && !bp.carried_from_planting_id}
               warned={warned.has(bp.id)}
               onSave={savePlanting}
@@ -335,7 +375,7 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
               <li key={cropId} className="flex items-center gap-3 px-4 py-3">
                 <span className="h-3 w-3 rounded-full" style={{ background: toneOf(cropId) }} />
                 <span className="font-medium">{cropNames[cropId]}</span>
-                <span className="ml-auto text-muted">{n}포기</span>
+                <span className="ml-auto text-muted">{n}</span>
               </li>
             ))}
           </ul>
@@ -382,7 +422,12 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
             const which = picker;
             setPicker(null);
             if (which === "new") void plant(id);
-            else if (bp) void savePlanting({ ...bp, crop_id: id, plant_count: null });
+            else if (bp && bed) {
+              const sw = data.sowing[id];
+              const allowed = patternsFor(sw);
+              const method = allowed.includes(bp.method) ? bp.method : allowed[0] === "plant" ? "plant" : (sw?.pattern ?? "row");
+              void savePlanting({ ...bp, crop_id: id, method, rows: rowsFor(bed, method, sw, bp.rows), plant_count: null });
+            }
           }}
           onClose={() => setPicker(null)}
         />
@@ -484,6 +529,7 @@ function PlantingPanel({
   cropName,
   tone,
   spacing,
+  sowing,
   editable,
   warned,
   onSave,
@@ -495,6 +541,7 @@ function PlantingPanel({
   cropName: string;
   tone: string;
   spacing: number | null;
+  sowing: Sowing | undefined;
   editable: boolean;
   warned: boolean;
   onSave: (p: BedPlanting) => void;
@@ -504,6 +551,11 @@ function PlantingPanel({
   const len = bedLength(bed);
   const auto = autoPlantCount(bed, planting, spacing);
   const count = planting.plant_count ?? auto;
+  const patterns = patternsFor(sowing);
+  const method = planting.method;
+  const rowSpacing = sowing?.rowSpacing ?? null;
+  const autoRows = autoRowCount(bed, rowSpacing ?? FALLBACK_ROW_SPACING) ?? 1;
+  const choose = (m: SowPattern) => onSave({ ...planting, method: m, rows: rowsFor(bed, m, sowing, planting.rows), plant_count: null });
   return (
     <div className="flex flex-col gap-3 border-t border-line pt-3">
       <div className="flex items-center justify-between">
@@ -519,9 +571,65 @@ function PlantingPanel({
         )}
       </div>
       {warned && <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">연작 주의 · 지난 작기에 같은 과를 심은 자리예요.</p>}
-      {bed.kind === "bed" && (
+      {patterns.length > 1 && (
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted">몇 줄 심기</span>
+          <span className="text-xs text-muted">심는 방법</span>
+          <div className={`grid gap-1 ${patterns.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
+            {patterns.map((m) => (
+              <button
+                key={m}
+                disabled={!editable}
+                onClick={() => choose(m)}
+                className={`h-9 rounded-lg border text-sm ${method === m ? "border-primary bg-primary-soft font-medium text-primary" : "border-line"}`}
+              >
+                {SOW_PATTERN_LABEL[m]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {bed.kind === "bed" && method === "row" && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted">줄 수</span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={!editable || planting.rows <= 1}
+              onClick={() => onSave({ ...planting, rows: planting.rows - 1 })}
+              className="h-9 w-10 rounded-lg border border-line text-lg disabled:opacity-40"
+              aria-label="한 줄 빼기"
+            >
+              −
+            </button>
+            <span className="min-w-14 text-center font-medium">{planting.rows}줄</span>
+            <button
+              disabled={!editable || planting.rows >= 12}
+              onClick={() => onSave({ ...planting, rows: planting.rows + 1 })}
+              className="h-9 w-10 rounded-lg border border-line text-lg disabled:opacity-40"
+              aria-label="한 줄 더하기"
+            >
+              +
+            </button>
+            {editable && planting.rows !== autoRows && (
+              <button className="ml-auto h-9 rounded-lg border border-line px-3 text-sm" onClick={() => onSave({ ...planting, rows: autoRows })}>
+                적정({autoRows}줄)
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-muted">
+            {rowSpacing
+              ? `두둑 폭 ${bedWidth(bed)}cm ÷ 적정 줄간격 ${rowSpacing}cm = ${autoRows}줄`
+              : `작물 백과에 줄간격이 없어 ${FALLBACK_ROW_SPACING}cm로 계산했어요 (${autoRows}줄).`}
+          </p>
+        </div>
+      )}
+      {method === "broadcast" && (
+        <p className="rounded-lg border border-line px-3 py-2 text-xs text-muted">
+          흩어뿌림 · 구간 전체에 고르게 뿌려요. 싹이 나면 솎아 간격을 맞춰요.
+        </p>
+      )}
+      {bed.kind === "bed" && countsPlants(method) && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted">{method === "hill" ? "몇 줄 점뿌림" : "몇 줄 심기"}</span>
           <div className="grid grid-cols-4 gap-1">
             {[1, 2, 3, 4].map((n) => (
               <button
@@ -534,6 +642,25 @@ function PlantingPanel({
               </button>
             ))}
           </div>
+          {planting.rows > 1 && (
+            <div className="mt-1 grid grid-cols-2 gap-1">
+              {(
+                [
+                  ["parallel", "나란히"],
+                  ["staggered", "엇갈려 (지그재그)"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  disabled={!editable}
+                  onClick={() => onSave({ ...planting, layout: v })}
+                  className={`h-9 rounded-lg border text-sm ${planting.layout === v ? "border-primary bg-primary-soft font-medium text-primary" : "border-line"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {bed.kind === "bed" && (
@@ -547,9 +674,10 @@ function PlantingPanel({
           />
         </div>
       )}
+      {countsPlants(method) && (
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <NumberField label="포기 수" value={count ?? 0} suffix="포기" disabled={!editable} onCommit={(v) => onSave({ ...planting, plant_count: v })} />
+          <NumberField label={method === "hill" ? "구멍 수" : "포기 수"} value={count ?? 0} suffix="포기" disabled={!editable} onCommit={(v) => onSave({ ...planting, plant_count: v })} />
         </div>
         {editable && planting.plant_count !== null && auto !== null && (
           <button className="h-10 rounded-lg border border-line px-3 text-sm" onClick={() => onSave({ ...planting, plant_count: null })}>
@@ -557,9 +685,12 @@ function PlantingPanel({
           </button>
         )}
       </div>
-      <p className="text-xs text-muted">
-        {spacing ? `포기 간격 ${spacing}cm 기준으로 자동 계산해요.` : "작물 백과에 포기 간격이 없어 포기 수를 직접 입력하세요."}
-      </p>
+      )}
+      {countsPlants(method) && (
+        <p className="text-xs text-muted">
+          {spacing ? `포기 간격 ${spacing}cm 기준으로 자동 계산해요.` : "작물 백과에 포기 간격이 없어 포기 수를 직접 입력하세요."}
+        </p>
+      )}
       {editable && (
         <button className="h-10 rounded-lg border border-danger-line text-sm text-danger" onClick={onRemove}>
           이 작물 빼기

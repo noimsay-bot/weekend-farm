@@ -3,7 +3,7 @@
 // 밭 그림: 흙(고랑) 위에 두둑·네모 밭을 놓고, 심은 작물은 포기 위치에 원으로 그린다.
 // layout 모드에서는 구획을 끌어 옮기고 오른쪽 아래 손잡이로 크기를 바꾼다 (10cm 단위).
 import { useRef, useState } from "react";
-import { plantCountOf, plantPositions, segmentRect, snap, type Bed, type BedPlanting } from "@/lib/field/beds";
+import { plantCountOf, plantPositions, scatterPoints, segmentRect, snap, sowLines, type Bed, type BedPlanting } from "@/lib/field/beds";
 import { toneMap } from "@/lib/field/colors";
 
 export type FieldMarker = "todo" | "warn";
@@ -146,6 +146,9 @@ export function FieldMap({
         const tone = tones.get(p.crop_id)!;
         const count = plantCountOf(b, p, spacingOf(p.crop_id));
         const pts = plantPositions(b, p, Math.min(count, 400));
+        const lines = p.method === "row" ? sowLines(b, p) : [];
+        const area = (r.x1 - r.x0) * (r.y1 - r.y0);
+        const seeds = p.method === "broadcast" ? scatterPoints(r, Math.min(160, Math.max(12, Math.round(area / (unit * unit * 1.2))))) : [];
         const short = Math.min(r.x1 - r.x0, r.y1 - r.y0);
         const gap = pts.length > 1 ? Math.min(...pts.slice(1).map((q, i) => Math.hypot(q.x - pts[i].x, q.y - pts[i].y))) : short;
         const radius = Math.max(unit * 0.25, Math.min(gap * 0.38, short / (b.kind === "plot" ? 3 : p.rows * 2.6), unit * 1.6));
@@ -172,6 +175,12 @@ export function FieldMap({
               stroke={isWarned ? "var(--danger)" : "none"}
               strokeWidth={unit * 0.25}
             />
+            {lines.map((l, i) => (
+              <line key={`l${i}`} {...l} stroke={tone.stroke} strokeWidth={unit * 0.28} strokeDasharray={`${unit * 0.35} ${unit * 0.25}`} strokeLinecap="round" />
+            ))}
+            {seeds.map((q, i) => (
+              <circle key={`s${i}`} cx={q.x} cy={q.y} r={unit * 0.16} fill={tone.stroke} />
+            ))}
             {pts.map((q, i) => (
               <circle key={i} cx={q.x} cy={q.y} r={radius} fill="#ffffff" stroke={tone.stroke} strokeWidth={Math.max(unit * 0.1, radius * 0.22)} />
             ))}

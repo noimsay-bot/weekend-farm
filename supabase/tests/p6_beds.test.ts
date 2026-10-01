@@ -51,7 +51,14 @@ describe("field beds", () => {
     await asUser(db, U, ins, [plan, bed["세로"], crop["무"], 2, 0, null, null]);
     await asUser(db, U, ins, [plan, bed["가로"], crop["양배추"], 1, 100, 100, 3]);
     await asUser(db, U, ins, [plan, bed["네모"], crop["배추"], 1, 0, null, 5]);
+    await asUser(db, U, "update plan_bed_plantings set layout = 'staggered' where bed_id = $1", [bed["세로"]]);
+    await expect(asUser(db, U, "update plan_bed_plantings set layout = 'diagonal' where bed_id = $1", [bed["세로"]])).rejects.toThrow();
     await asUser(db, U, "select sync_plan_bed_cells($1)", [plan]);
+    const bpId = (await asUser<{ id: string }>(db, U, "select id from plan_bed_plantings where bed_id = $1", [bed["세로"]]))[0].id;
+    await asUser(db, U, "update plan_bed_plantings set method = 'row' where id = $1", [bpId]);
+    const sown = await db.query<{ n: number | null }>("select bed_planting_auto_count($1) as n", [bpId]);
+    expect(sown.rows[0].n).toBeNull();
+    await asUser(db, U, "update plan_bed_plantings set method = 'hill' where id = $1", [bpId]);
     const cells = await asUser<{ x: number; y: number; name: string }>(
       db,
       U,
@@ -90,6 +97,8 @@ describe("field beds", () => {
     const next = (await one<{ id: string }>(U, "select create_plan($1, 2027, 'spring', $2) as id", [farm, plan])).id;
     const copied = await asUser<{ n: number }>(db, U, "select count(*)::int as n from plan_bed_plantings where plan_id = $1", [next]);
     expect(copied[0].n).toBe(3);
+    const staggered = await asUser<{ n: number }>(db, U, "select count(*)::int as n from plan_bed_plantings where plan_id = $1 and layout = 'staggered'", [next]);
+    expect(staggered[0].n).toBe(1);
     const cells = await asUser<{ n: number }>(db, U, "select count(*)::int as n from field_plan_cells where plan_id = $1", [next]);
     expect(cells[0].n).toBe(18);
   });

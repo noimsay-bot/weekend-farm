@@ -1,6 +1,7 @@
 {
   "name": "냉이",
   "category": "나물",
+  "sow_pattern": "broadcast",
   "summary": "봄나물로 먹는 냉이를 텃밭에 직접 기른다. 9월에 아주 작은 씨를 흙과 섞어 흩어 뿌리면 겨울을 나고 이듬해 봄까지 거둘 수 있다. 거름은 퇴비 위주로 충분하다.",
   "family": {
     "value": null,

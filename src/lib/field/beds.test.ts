@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPlantCount, plantPositions, segmentCells, segmentRect, type Bed, type BedPlanting } from "./beds";
+import { autoPlantCount, autoRowCount, sowLines, plantPositions, segmentCells, segmentRect, type Bed, type BedPlanting } from "./beds";
 
 const vertical: Bed = { id: "v", kind: "bed", x_cm: 0, y_cm: 200, w_cm: 100, h_cm: 300, label: null };
 const horizontal: Bed = { id: "h", kind: "bed", x_cm: 0, y_cm: 100, w_cm: 300, h_cm: 50, label: null };
@@ -12,6 +12,8 @@ const bp = (o: Partial<BedPlanting>): BedPlanting => ({
   start_cm: 0,
   length_cm: null,
   plant_count: null,
+  layout: "parallel",
+  method: "plant",
   carried_from_planting_id: null,
   ...o,
 });
@@ -36,6 +38,15 @@ describe("bed geometry", () => {
     expect(autoPlantCount(vertical, bp({ rows: 2 }), 25)).toBe(24);
     expect(autoPlantCount(plot, bp({}), 40)).toBe(4);
     expect(autoPlantCount(vertical, bp({}), null)).toBeNull();
+    expect(autoPlantCount(vertical, bp({ rows: 2, method: "hill" }), 25)).toBe(24);
+    expect(autoPlantCount(vertical, bp({ method: "row" }), 25)).toBeNull();
+    expect(autoPlantCount(vertical, bp({ method: "broadcast" }), 25)).toBeNull();
+  });
+
+  it("derives drill-sowing rows from bed width and row spacing", () => {
+    expect(autoRowCount(vertical, 30)).toBe(Math.floor(vertical.w_cm / 30));
+    expect(autoRowCount(vertical, null)).toBeNull();
+    expect(sowLines(vertical, bp({ rows: 3, method: "row" }))).toHaveLength(3);
   });
 
   it("lays plants out in rows inside the segment", () => {
@@ -46,5 +57,15 @@ describe("bed geometry", () => {
     const five = plantPositions(plot, bp({}), 5);
     expect(five).toHaveLength(5);
     expect(five.every((p) => p.x > 200 && p.x < 300 && p.y > 0 && p.y < 100)).toBe(true);
+  });
+
+  it("offsets alternate rows by half a step when staggered", () => {
+    const par = plantPositions(vertical, bp({ rows: 2 }), 6);
+    const stg = plantPositions(vertical, bp({ rows: 2, layout: "staggered" }), 6);
+    const ys = (pts: { x: number; y: number }[], x: number) => pts.filter((p) => p.x === x).map((p) => p.y);
+    expect(ys(par, 25)).toEqual(ys(par, 75));
+    const [l, r] = [ys(stg, 25), ys(stg, 75)];
+    const step = l[1] - l[0];
+    r.forEach((y, i) => expect(y - l[i]).toBeCloseTo(step / 2));
   });
 });
