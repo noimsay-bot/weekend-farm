@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "collect": "tsx --env-file=.env.local scripts/collect/run.ts"
+    "collect": "tsx --env-file=.env.local scripts/collect/run.ts",
+    "crops:check": "tsx scripts/crops/check.ts",
+    "crops:import": "tsx --env-file=.env.local scripts/crops/import.ts",
+    "crops:research": "tsx --env-file=.env.local scripts/crops/research.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

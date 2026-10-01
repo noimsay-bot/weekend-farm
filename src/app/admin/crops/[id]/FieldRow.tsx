@@ -12,7 +12,11 @@ export type FieldSource = {
   source_url: string | null;
   approved: boolean;
   manual_input: boolean;
+  origin?: "nongsaro" | "ai_research" | "manual";
+  confidence?: "high" | "medium" | "low" | null;
 };
+
+const CONFIDENCE = { high: "신뢰도 높음", medium: "신뢰도 보통", low: "신뢰도 낮음" } as const;
 
 export function FieldRow({
   cropId,
@@ -62,6 +66,9 @@ export function FieldRow({
 
       {source?.source_text && (
         <blockquote className="mt-2 border-l-2 border-neutral-300 pl-2 text-xs text-neutral-600">
+          {source.confidence && (
+            <span className={`mr-1 font-medium ${source.confidence === "low" ? "text-amber-700" : "text-neutral-700"}`}>[{CONFIDENCE[source.confidence]}]</span>
+          )}
           {source.source_text}
           {source.source_url && (
             <a href={source.source_url} target="_blank" rel="noreferrer" className="ml-1 text-primary underline">

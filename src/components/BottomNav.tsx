@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/", label: "밭", match: (p: string) => p === "/" || p.startsWith("/plan") },
   { href: "/calendar", label: "캘린더", match: (p: string) => p.startsWith("/calendar") },
   { href: "/log/new", label: "기록", match: (p: string) => p.startsWith("/log") },
+  { href: "/crops", label: "작물", match: (p: string) => p.startsWith("/crops") },
   { href: "/settings", label: "설정", match: (p: string) => p.startsWith("/settings") },
 ];
 
@@ -19,7 +20,7 @@ export function BottomNav() {
     <>
       <div className="h-16" />
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid max-w-md grid-cols-4">
+        <div className="mx-auto grid max-w-md grid-cols-5">
           {ITEMS.map((item) => (
             <Link
               key={item.href}

@@ -9,6 +9,8 @@ import { rangesFor, type TimingCalendar } from "@/lib/weather/timing";
 import { nextOccurrence, seedlingStart } from "@/lib/weather/recommend";
 import { formatFieldValue, REQUIRED_CROP_FIELDS } from "@/lib/crop-fields";
 import { Screen } from "@/components/ui";
+import { GuideBody } from "@/components/GuideBody";
+import { YearBar, type YearRange } from "@/components/YearBar";
 import { PesticideList, type PestRow } from "./PesticideList";
 
 const ACTIVITY: Record<string, string> = { sow: "파종", transplant: "정식", harvest: "수확" };
@@ -20,7 +22,7 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
   const { data: crop } = await supabase.from("crops").select("*, crop_families(name)").eq("id", id).eq("status", "confirmed").maybeSingle();
   if (!crop) notFound();
 
-  const [calendars, fertilizers, pests, companions, products, productSettings] = await Promise.all([
+  const [calendars, fertilizers, pests, companions, products, productSettings, guides, refs] = await Promise.all([
     supabase.from("crop_regional_calendars").select("*").eq("crop_id", id),
     supabase.from("crop_fertilizer_schedules").select("*").eq("crop_id", id).order("stage").order("sequence"),
     supabase.from("crop_pest_controls").select("*").eq("crop_id", id).order("pest_name"),
@@ -30,7 +32,12 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
       .or(`crop_a_id.eq.${id},crop_b_id.eq.${id}`),
     supabase.from("fertilizer_products").select("id, farm_id, name, n_pct, p_pct, k_pct, is_default"),
     farm ? supabase.from("farm_fertilizer_settings").select("usage, product_id").eq("farm_id", farm.id) : Promise.resolve({ data: [] }),
+    supabase.from("crop_guides").select("section, body").eq("crop_id", id).order("sort"),
+    supabase.from("crop_references").select("ref_key, kind, title, url, publisher, summary").eq("crop_id", id).order("sort"),
   ]);
+  const references = (refs.data ?? []) as { ref_key: string; kind: "doc" | "video"; title: string; url: string; publisher: string | null; summary: string | null }[];
+  const videos = references.filter((r) => r.kind === "video" && youtubeId(r.url));
+  const docs = references.filter((r) => !videos.includes(r));
 
   const today = todayKst();
   const region = farm ? ((await supabase.from("farms").select("region").eq("id", farm.id).single()).data?.region ?? null) : null;
@@ -52,10 +59,18 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
 
   return (
     <Screen title={crop.name}>
-      <Link href="/" className="text-sm text-primary">
-        ← 밭으로
+      <Link href="/crops" className="text-sm text-primary">
+        ← 작물 백과
       </Link>
+      {crop.category && <p className="-mt-3 text-sm text-neutral-500">{crop.category}</p>}
       {crop.description && <p className="text-sm text-neutral-700">{crop.description}</p>}
+
+      {cal.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-semibold">한눈에 보기</h2>
+          <YearBar ranges={cal as unknown as YearRange[]} region={region} />
+        </section>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="font-semibold">재배 요약</h2>
@@ -82,6 +97,15 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
           </ul>
         )}
       </section>
+
+      {(guides.data ?? []).map((g) => (
+        <section key={g.section} className="flex flex-col gap-2">
+          <h2 className="font-semibold">{g.section}</h2>
+          <div className="rounded-lg bg-white p-3 text-sm leading-relaxed">
+            <GuideBody body={g.body} />
+          </div>
+        </section>
+      ))}
 
       {(crop.seedling_days || transplant.length > 0) && (
         <section className="flex flex-col gap-2">
@@ -154,11 +178,52 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
         )}
       </section>
 
-      {crop.source_url && (
-        <a href={crop.source_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">
-          출처: 농사로
-        </a>
+      {videos.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-semibold">추천 영상</h2>
+          {videos.map((v) => (
+            <div key={v.ref_key} className="flex flex-col gap-2 rounded-lg bg-white p-3 text-sm">
+              <iframe
+                className="aspect-video w-full rounded"
+                src={`https://www.youtube-nocookie.com/embed/${youtubeId(v.url)}`}
+                title={v.title}
+                loading="lazy"
+                allowFullScreen
+              />
+              <p className="font-medium">{v.title}</p>
+              {v.publisher && <p className="text-xs text-neutral-500">{v.publisher}</p>}
+              {v.summary && <p className="text-neutral-700">{v.summary}</p>}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {docs.length > 0 ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-semibold">참고 자료</h2>
+          <p className="text-xs text-neutral-500">여러 공공기관 자료와 영상을 바탕으로 정리했어요. 핵심 수치는 두 곳 이상에서 확인한 값이에요.</p>
+          <ul className="flex flex-col gap-1 rounded-lg bg-white p-3 text-sm">
+            {docs.map((r) => (
+              <li key={r.ref_key}>
+                <a href={r.url} target="_blank" rel="noreferrer" className="text-primary underline">
+                  {r.title}
+                </a>
+                {r.publisher && <span className="text-neutral-500"> · {r.publisher}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        crop.source_url && (
+          <a href={crop.source_url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">
+            출처: 농사로
+          </a>
+        )
       )}
     </Screen>
   );
+}
+
+function youtubeId(url: string): string | null {
+  return url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/)?.[1] ?? null;
 }

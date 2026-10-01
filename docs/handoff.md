@@ -4,7 +4,7 @@
 
 ## 현재 상태
 - 지시서 P0~P10 코드 완료, `main`에 push, Vercel 배포됨 (https://weekend-farm.vercel.app).
-- Supabase 마이그레이션 P0~P5 적용됨. `20261002000001_realtime.sql`(대시보드 실시간 반영)도 적용됨. **`20261002000002_quick_confirm.sql`, `20261002000003_unconfirm_crop.sql`(작물별 승인/승인 취소)은 SQL Editor에서 적용 필요.**
+- Supabase 마이그레이션 P0~P5 적용됨. `20261002000001_realtime.sql`(대시보드 실시간 반영)도 적용됨. **`20261002000002_quick_confirm.sql`, `20261002000003_unconfirm_crop.sql`(작물별 승인/승인 취소), `20261003000001_crop_encyclopedia.sql`(작물 백과사전)은 SQL Editor에서 적용 필요.**
 - Vercel 환경변수(Production): Supabase URL·publishable key, service role key, VAPID 3개, CRON_SECRET.
 - GitHub Actions secrets: `APP_URL`, `CRON_SECRET`.
 - 일일 크론 수동 실행 200 확인. 기상청 키가 없어 날씨는 아직 건너뜀.
@@ -33,5 +33,5 @@ npm test
 - 수정이 끝나고 lint·test·build가 통과하면 묻지 말고 `main`에 커밋·push (Vercel 자동 배포).
 - 로그인은 이메일+비밀번호 (Supabase Confirm email 끔). 지시서의 OTP 방식은 쓰지 않는다 — 기본 메일은 custom SMTP 없이 템플릿 수정 불가.
 - 밭 격자는 스크롤 없이 한 화면에 보여야 한다 (`src/lib/grid-fit.ts`).
-- 작물 재배 수치는 농사로 원문에서만. 모르는 값은 비워 두고 관리자가 입력.
+- 작물 자료는 작물별로 조사해 `data/crops/*.json`으로 만든다 (2026-10-01 변경, `docs/crop-data.md`). 수치마다 출처 필수, 핵심 수치는 2곳 이상, 모르면 비워 둔다. 유튜브는 광닭이·농사친구 중심. 다른 작물 자료를 빌려 쓰지 않는다.
 - DB 변경은 `supabase/migrations`에 새 파일로 추가하고, `supabase/tests`(PGlite)로 RLS 테스트를 함께 쓴다. 적용은 Supabase SQL Editor.
