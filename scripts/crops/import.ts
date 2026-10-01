@@ -141,7 +141,27 @@ async function importCrop(db: SupabaseClient, doc: CropDoc) {
   await must(db.from("crop_guides").delete().eq("crop_id", cropId));
   if (doc.guides.length) {
     await must(
-      db.from("crop_guides").insert(doc.guides.map((g, i) => ({ crop_id: cropId, section: g.section, body: g.body, ref_keys: g.refs, sort: i }))),
+      db.from("crop_guides").insert(doc.guides.map((g, i) => ({ crop_id: cropId, section: g.section, summary: g.summary, body: g.body, ref_keys: g.refs, sort: i }))),
+    );
+  }
+  // 파종·정식 기온 기준
+  await must(db.from("crop_temp_windows").delete().eq("crop_id", cropId));
+  if (doc.temp_windows?.length) {
+    await must(
+      db.from("crop_temp_windows").insert(
+        doc.temp_windows.map((w, i) => ({
+          crop_id: cropId,
+          cropping_type: w.cropping_type,
+          activity: w.activity,
+          trend: w.trend,
+          from_c: w.from_c,
+          to_c: w.to_c,
+          basis: w.basis,
+          note: w.note,
+          source_url: refUrl(w.refs),
+          sort: i,
+        })),
+      ),
     );
   }
   return { status: crop.status, manual: [...manual] };

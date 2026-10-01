@@ -2,7 +2,7 @@
 import { addDays, diffDays } from "../dates";
 
 export type HourlyForecast = { fcst_date: string; fcst_hour: number; pop: number | null; pcp_mm: number | null; tmp_c: number | null };
-export type DailyForecast = { date: string; minC: number | null; maxC: number | null; pop: number; pcpMm: number };
+export type DailyForecast = { date: string; minC: number | null; maxC: number | null; meanC?: number | null; pop: number; pcpMm: number };
 export type RainSettings = { popThreshold: number; mmThreshold: number | null };
 
 export function toDaily(hourly: HourlyForecast[]): DailyForecast[] {
@@ -16,6 +16,7 @@ export function toDaily(hourly: HourlyForecast[]): DailyForecast[] {
         date,
         minC: temps.length ? Math.min(...temps) : null,
         maxC: temps.length ? Math.max(...temps) : null,
+        meanC: temps.length ? Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10 : null,
         pop: Math.max(0, ...hs.map((h) => Number(h.pop ?? 0))),
         pcpMm: hs.reduce((s, h) => s + Number(h.pcp_mm ?? 0), 0),
       };
@@ -59,7 +60,44 @@ export type WindowResult =
       lastYear: { minC: number; maxC: number } | null;
     }
   | { stage: "waiting"; start: string; end: string }
-  | { stage: "confirmed"; date: string; start: string; end: string; basis: "temperature" | "calendar" };
+  | { stage: "confirmed"; date: string; start: string; end: string; basis: "temperature" | "calendar" | "mean_temp"; meanC?: number }
+  | { stage: "late"; start: string; end: string; meanC: number };
+
+// 파종·정식 기온 기준 (crop_temp_windows)
+export type TempWindow = { cropping_type: string; trend: "falling" | "rising"; from_c: number; to_c: number };
+
+const dayMean = (min: number | null, max: number | null) => (min === null || max === null ? null : (Number(min) + Number(max)) / 2);
+
+// 일평균기온 기준 판정. 최근 3일 관측 평균(없으면 오늘 예보)이 구간 안이면 오늘이 적기,
+// 아직 구간 전이면 예보에서 구간에 들어오는 첫날, 구간을 지났으면 '늦음'.
+// 예보 범위 안에서 판단할 수 없으면 null을 돌려 관행 날짜 판정으로 넘긴다.
+export function judgeMeanTemp(
+  w: TempWindow,
+  forecast: DailyForecast[],
+  observations: Observation[],
+  today: string,
+  display: { start: string; end: string },
+): WindowResult | null {
+  const recent = observations
+    .filter((o) => o.obs_date < today && o.obs_date >= addDays(today, -3))
+    .map((o) => dayMean(o.min_temp_c, o.max_temp_c))
+    .filter((m): m is number => m !== null);
+  const fcst = forecast
+    .filter((d) => d.date >= today)
+    .map((d) => ({ date: d.date, mean: d.meanC ?? dayMean(d.minC, d.maxC) }))
+    .filter((d): d is { date: string; mean: number } => d.mean !== null);
+  const now = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : fcst[0]?.mean;
+  if (now === undefined) return null;
+  const round = (x: number) => Math.round(x * 10) / 10;
+  const falling = w.trend === "falling";
+  const before = (m: number) => (falling ? m > w.from_c : m < w.from_c);
+  const after = (m: number) => (falling ? m < w.to_c : m > w.to_c);
+  if (!before(now) && !after(now)) return { stage: "confirmed", date: today, ...display, basis: "mean_temp", meanC: round(now) };
+  if (after(now)) return { stage: "late", ...display, meanC: round(now) };
+  const enter = fcst.find((d) => !before(d.mean) && !after(d.mean));
+  if (enter) return { stage: "confirmed", date: enter.date, ...display, basis: "mean_temp", meanC: round(enter.mean) };
+  return null;
+}
 
 export type Observation = { obs_date: string; min_temp_c: number | null; max_temp_c: number | null };
 

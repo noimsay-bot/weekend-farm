@@ -22,7 +22,7 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
   const { data: crop } = await supabase.from("crops").select("*, crop_families(name)").eq("id", id).eq("status", "confirmed").maybeSingle();
   if (!crop) notFound();
 
-  const [calendars, fertilizers, pests, companions, products, productSettings, guides, refs] = await Promise.all([
+  const [calendars, fertilizers, pests, companions, products, productSettings, guides, refs, tempWindows] = await Promise.all([
     supabase.from("crop_regional_calendars").select("*").eq("crop_id", id),
     supabase.from("crop_fertilizer_schedules").select("*").eq("crop_id", id).order("stage").order("sequence"),
     supabase.from("crop_pest_controls").select("*").eq("crop_id", id).order("pest_name"),
@@ -32,8 +32,9 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
       .or(`crop_a_id.eq.${id},crop_b_id.eq.${id}`),
     supabase.from("fertilizer_products").select("id, farm_id, name, n_pct, p_pct, k_pct, is_default"),
     farm ? supabase.from("farm_fertilizer_settings").select("usage, product_id").eq("farm_id", farm.id) : Promise.resolve({ data: [] }),
-    supabase.from("crop_guides").select("section, body").eq("crop_id", id).order("sort"),
+    supabase.from("crop_guides").select("section, summary, body").eq("crop_id", id).order("sort"),
     supabase.from("crop_references").select("ref_key, kind, title, url, publisher, summary").eq("crop_id", id).order("sort"),
+    supabase.from("crop_temp_windows").select("cropping_type, activity, trend, from_c, to_c, basis, note").eq("crop_id", id).order("sort"),
   ]);
   const references = (refs.data ?? []) as { ref_key: string; kind: "doc" | "video"; title: string; url: string; publisher: string | null; summary: string | null }[];
   const videos = references.filter((r) => r.kind === "video" && youtubeId(r.url));
@@ -65,10 +66,27 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
       {crop.category && <p className="-mt-3 text-sm text-neutral-500">{crop.category}</p>}
       {crop.description && <p className="text-sm text-neutral-700">{crop.description}</p>}
 
-      {cal.length > 0 && (
+      {((tempWindows.data ?? []).length > 0 || cal.length > 0) && (
         <section className="flex flex-col gap-2">
-          <h2 className="font-semibold">한눈에 보기</h2>
-          <YearBar ranges={cal as unknown as YearRange[]} region={region} />
+          <h2 className="font-semibold">언제 심나</h2>
+          {(tempWindows.data ?? []).map((w, i) => (
+            <div key={i} className="flex items-start gap-3 rounded-xl border border-primary-line bg-primary-soft p-3 text-sm">
+              <span className="mt-0.5 rounded-md bg-primary px-1.5 py-0.5 text-xs font-semibold text-white">{w.activity === "sow" ? "파종" : "정식"}</span>
+              <div className="flex-1">
+                <p className="font-semibold">
+                  {w.cropping_type && <span className="mr-1 text-muted">{w.cropping_type}</span>}
+                  일평균기온 {Number(w.from_c)}℃ → {Number(w.to_c)}℃ {w.trend === "falling" ? "(내려갈 때)" : "(올라갈 때)"}
+                </p>
+                <p className="mt-0.5 text-xs text-muted">{w.note}</p>
+              </div>
+            </div>
+          ))}
+          {cal.length > 0 && (
+            <>
+              <p className="text-xs text-muted">아래 날짜는 관행 참고치예요. 실제 적기는 기온으로 판단해 밭 화면에서 알려드려요.</p>
+              <YearBar ranges={cal as unknown as YearRange[]} region={region} />
+            </>
+          )}
         </section>
       )}
 
@@ -98,14 +116,37 @@ export default async function CropDetailPage({ params }: PageProps<"/crops/[id]"
         )}
       </section>
 
-      {(guides.data ?? []).map((g) => (
-        <section key={g.section} className="flex flex-col gap-2">
-          <h2 className="font-semibold">{g.section}</h2>
-          <div className="rounded-lg bg-white p-3 text-sm leading-relaxed">
-            <GuideBody body={g.body} />
+      {(guides.data ?? []).length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-semibold">재배 요령</h2>
+          <div className="divide-y divide-line rounded-2xl border border-line bg-white">
+            {(guides.data ?? []).map((g) => (
+              <div key={g.section} className="p-4 text-sm">
+                <p className="font-semibold">{g.section}</p>
+                {(g.summary ?? []).length > 0 && (
+                  <ul className="mt-2 flex flex-col gap-1.5">
+                    {(g.summary as string[]).map((line) => (
+                      <li key={line} className="flex gap-2 leading-snug">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <details className="group mt-2">
+                  <summary className="cursor-pointer list-none text-xs font-medium text-muted group-open:mb-2">
+                    <span className="group-open:hidden">더보기 ▾</span>
+                    <span className="hidden group-open:inline">접기 ▴</span>
+                  </summary>
+                  <div className="leading-relaxed text-foreground/80">
+                    <GuideBody body={g.body} />
+                  </div>
+                </details>
+              </div>
+            ))}
           </div>
         </section>
-      ))}
+      )}
 
       {(crop.seedling_days || transplant.length > 0) && (
         <section className="flex flex-col gap-2">

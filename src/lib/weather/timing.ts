@@ -2,13 +2,16 @@
 import { addDays } from "../dates";
 import {
   harvestRainAdvice,
+  judgeMeanTemp,
   judgeWindow,
+  nextOccurrence,
   seedlingStart,
   weekRange,
   type DailyForecast,
   type HarvestAdvice,
   type Observation,
   type RainSettings,
+  type TempWindow,
   type WindowRange,
   type WindowResult,
 } from "./recommend";
@@ -23,6 +26,7 @@ export type TimingCrop = {
   harvest_avoid_rain: boolean | null;
   harvest_window_days: number | null;
   rain_wait_days: number | null;
+  temp_windows?: (TempWindow & { activity: "sow" | "transplant" })[];
 };
 
 export type TimingPlanting = {
@@ -81,6 +85,32 @@ function activityOf(p: TimingPlanting, crop: TimingCrop, calendars: TimingCalend
   return rangesFor(calendars, crop.id, "transplant", region).length ? "transplant" : "sow";
 }
 
+// 일평균기온 기준(작형별)이 있으면 먼저 판정한다. 봄 작형(rising)은 1~7월, 가을 작형(falling)은 7~12월에만 본다.
+// 적기(오늘·예보 안)가 있으면 그것을, 모두 지났으면 '늦음', 판단할 수 없으면 null(관행 날짜 판정으로).
+function judgeByTemp(
+  crop: TimingCrop,
+  activity: "sow" | "transplant",
+  ranges: TimingCalendar[],
+  forecast: DailyForecast[],
+  observations: Observation[],
+  today: string,
+): WindowResult | null {
+  const month = Number(today.slice(5, 7));
+  const windows = (crop.temp_windows ?? []).filter(
+    (w) => w.activity === activity && (w.trend === "rising" ? month <= 7 : month >= 7),
+  );
+  if (windows.length === 0) return null;
+  const results = windows.map((w) => {
+    const ref = ranges.filter((r) => (r.cropping_type ?? "") === w.cropping_type);
+    const occ = (ref.length ? ref : ranges).map((r) => nextOccurrence(r, today)).sort((a, b) => a.start.localeCompare(b.start))[0];
+    return judgeMeanTemp(w, forecast, observations, today, occ ?? { start: today, end: today });
+  });
+  const confirmed = results.filter((r): r is Extract<WindowResult, { stage: "confirmed" }> => r?.stage === "confirmed").sort((a, b) => a.date.localeCompare(b.date));
+  if (confirmed.length) return confirmed[0];
+  if (results.every((r) => r?.stage === "late")) return results[0];
+  return null;
+}
+
 const fmt = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 
 export function computeFarmTiming(input: {
@@ -105,13 +135,10 @@ export function computeFarmTiming(input: {
     if (!crop || p.sow_date || p.transplant_date) continue; // 이미 심은 식재는 적기 판정 대상이 아님
     const activity = activityOf(p, crop, input.calendars, region);
     const verb = activity === "sow" ? "파종" : "정식";
-    const result: WindowResult = judgeWindow(
-      rangesFor(input.calendars, crop.id, activity, region),
-      crop,
-      input.forecast,
-      today,
-      input.observations,
-    );
+    const ranges = rangesFor(input.calendars, crop.id, activity, region);
+    const result: WindowResult =
+      judgeByTemp(crop, activity, ranges, input.forecast, input.observations, today) ??
+      judgeWindow(ranges, crop, input.forecast, today, input.observations);
     const seedlings = activity === "transplant" ? p.planned_plant_count : null;
 
     if (result.stage !== "none") {
@@ -133,7 +160,7 @@ export function computeFarmTiming(input: {
         kind: activity,
         plantingId: p.id,
         cropName: crop.name,
-        label: `${verb} 적기 ${fmt(result.date)}${seedlings ? ` · 모종 ${seedlings}개 필요` : ""}`,
+        label: `${verb} 적기 ${fmt(result.date)}${result.meanC !== undefined ? ` · 일평균 ${result.meanC}℃` : ""}${seedlings ? ` · 모종 ${seedlings}개 필요` : ""}`,
         date: result.date,
         seedlings,
       });
@@ -149,6 +176,10 @@ export function computeFarmTiming(input: {
         date: null,
         seedlings,
       });
+    }
+
+    if (result.stage === "late") {
+      out.weekly.push({ kind: activity, plantingId: p.id, cropName: crop.name, label: `${verb} 적기 지남 · 지금 일평균 ${result.meanC}℃`, date: null, seedlings });
     }
 
     // 육묘 시작 권장 시기: 관행 정식 시작일 - 육묘일수 (안내만)

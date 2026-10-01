@@ -44,13 +44,18 @@ export async function loadTimingInput(db: SupabaseClient, farm: FarmForTiming, t
   const cropIds = [...new Set([...plantingRows.map((p) => p.crop_id), ...taskRows.map((t) => t.crop_id)])];
   const none = ["00000000-0000-0000-0000-000000000000"];
 
-  const [crops, calendars] = await Promise.all([
+  const [crops, calendars, tempWindows] = await Promise.all([
     db
       .from("crops")
       .select("id, name, sow_method, min_temp_c, max_temp_c, seedling_days, harvest_avoid_rain, harvest_window_days, rain_wait_days")
       .in("id", cropIds.length ? cropIds : none),
     db.from("crop_regional_calendars").select("*").in("crop_id", cropIds.length ? cropIds : none),
+    db.from("crop_temp_windows").select("crop_id, cropping_type, activity, trend, from_c, to_c").in("crop_id", cropIds.length ? cropIds : none),
   ]);
+  const windowsOf = (id: string) =>
+    ((tempWindows.data ?? []) as { crop_id: string; cropping_type: string; activity: "sow" | "transplant"; trend: "falling" | "rising"; from_c: number; to_c: number }[])
+      .filter((w) => w.crop_id === id)
+      .map((w) => ({ ...w, from_c: Number(w.from_c), to_c: Number(w.to_c) }));
 
   return {
     today,
@@ -61,7 +66,7 @@ export async function loadTimingInput(db: SupabaseClient, farm: FarmForTiming, t
       mmThreshold: settings.data?.rain_mm_threshold === null || settings.data?.rain_mm_threshold === undefined ? null : Number(settings.data.rain_mm_threshold),
     },
     observations: observations.data ?? [],
-    crops: (crops.data ?? []) as TimingCrop[],
+    crops: ((crops.data ?? []) as TimingCrop[]).map((c) => ({ ...c, temp_windows: windowsOf(c.id) })),
     plantings: plantingRows,
     calendars: (calendars.data ?? []) as TimingCalendar[],
     harvestTasks: taskRows,

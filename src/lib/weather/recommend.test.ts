@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   harvestRainAdvice,
   isRainDay,
+  judgeMeanTemp,
   judgeWindow,
   nextOccurrence,
   seedlingStart,
@@ -21,8 +22,8 @@ describe("forecast helpers", () => {
       { fcst_date: "2026-10-02", fcst_hour: 6, pop: 0, pcp_mm: null, tmp_c: 7 },
     ]);
     expect(d).toEqual([
-      { date: "2026-10-01", minC: 9, maxC: 18, pop: 70, pcpMm: 3 },
-      { date: "2026-10-02", minC: 7, maxC: 7, pop: 0, pcpMm: 0 },
+      { date: "2026-10-01", minC: 9, maxC: 18, meanC: 13.5, pop: 70, pcpMm: 3 },
+      { date: "2026-10-02", minC: 7, maxC: 7, meanC: 7, pop: 0, pcpMm: 0 },
     ]);
   });
 
@@ -101,5 +102,32 @@ describe("harvestRainAdvice", () => {
   it("no advice without rain in window", () => {
     const f = [day("2026-06-10", 15, 25), day("2026-06-20", 15, 25, 90)];
     expect(harvestRainAdvice("2026-06-10", 2, 2, f, rain, "2026-06-10")).toBeNull();
+  });
+});
+
+describe("judgeMeanTemp", () => {
+  const w = { cropping_type: "가을 재배", trend: "falling" as const, from_c: 26, to_c: 24 };
+  const display = { start: "2026-08-20", end: "2026-09-05" };
+  const obs = (date: string, min: number, max: number) => ({ obs_date: date, min_temp_c: min, max_temp_c: max });
+  const f = (date: string, meanC: number) => ({ date, minC: meanC - 4, maxC: meanC + 4, meanC, pop: 0, pcpMm: 0 });
+
+  it("is the right time when the recent mean is inside the window", () => {
+    const r = judgeMeanTemp(w, [f("2026-08-25", 25)], [obs("2026-08-22", 21, 29), obs("2026-08-23", 21, 29), obs("2026-08-24", 20, 30)], "2026-08-25", display);
+    expect(r).toMatchObject({ stage: "confirmed", date: "2026-08-25", basis: "mean_temp", meanC: 25 });
+  });
+
+  it("finds the first forecast day entering the window", () => {
+    const r = judgeMeanTemp(w, [f("2026-08-20", 28), f("2026-08-21", 27), f("2026-08-22", 25.5)], [obs("2026-08-19", 24, 32)], "2026-08-20", display);
+    expect(r).toMatchObject({ stage: "confirmed", date: "2026-08-22", meanC: 25.5 });
+  });
+
+  it("says late once the mean has dropped past the window, and defers when undecidable", () => {
+    expect(judgeMeanTemp(w, [f("2026-09-20", 20)], [obs("2026-09-19", 15, 25)], "2026-09-20", display)).toMatchObject({ stage: "late", meanC: 20 });
+    expect(judgeMeanTemp(w, [f("2026-08-01", 29)], [obs("2026-07-31", 25, 33)], "2026-08-01", display)).toBeNull();
+  });
+
+  it("handles rising (spring) windows", () => {
+    const spring = { cropping_type: "봄 재배", trend: "rising" as const, from_c: 14, to_c: 16 };
+    expect(judgeMeanTemp(spring, [f("2026-04-25", 15)], [], "2026-04-25", display)).toMatchObject({ stage: "confirmed", meanC: 15 });
   });
 });

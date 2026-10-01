@@ -29,7 +29,21 @@ export type CropFertilizer = {
   top_dressing?: { days_after_planting: number; note: string; refs: string[] }[];
 };
 
-export type CropGuide = { section: GuideSection; body: string; refs: string[] };
+// 재배법: summary(핵심 1~4줄)만 먼저 보이고 body는 '더보기'.
+export type CropGuide = { section: GuideSection; summary: string[]; body: string; refs: string[] };
+
+// 파종·정식 기온 기준. 가을 작형은 일평균기온이 from_c에서 to_c로 내려가는 동안(falling), 봄 작형은 올라가는 동안(rising).
+// basis: source = 출처가 기온을 직접 말함, normal = 출처의 관행 날짜를 김포 평년 일평균기온(data/climate)으로 환산.
+export type CropTempWindow = {
+  cropping_type: string;
+  activity: "sow" | "transplant";
+  trend: "falling" | "rising";
+  from_c: number;
+  to_c: number;
+  basis: "source" | "normal";
+  note: string;
+  refs: string[];
+};
 
 export const GUIDE_SECTIONS = ["소개", "밭 준비", "파종·정식", "관리", "병해충", "수확", "보관", "자주 하는 실수"] as const;
 export type GuideSection = (typeof GUIDE_SECTIONS)[number];
@@ -42,6 +56,7 @@ export type CropDoc = {
   fields: Record<string, CropField>;
   calendars: CropCalendar[];
   fertilizer?: CropFertilizer;
+  temp_windows?: CropTempWindow[];
   guides: CropGuide[];
   refs: CropRef[];
 };
@@ -126,8 +141,18 @@ export function validateCropDoc(doc: CropDoc): string[] {
   if (doc.fertilizer?.base) checkRefs("fertilizer.base", doc.fertilizer.base.refs);
   for (const [i, t] of (doc.fertilizer?.top_dressing ?? []).entries()) checkRefs(`fertilizer.top_dressing[${i}]`, t.refs);
 
+  for (const [i, w] of (doc.temp_windows ?? []).entries()) {
+    if (!["sow", "transplant"].includes(w.activity)) errors.push(`temp_windows[${i}]: activity`);
+    if (w.trend === "falling" ? !(w.from_c > w.to_c) : !(w.from_c < w.to_c)) errors.push(`temp_windows[${i}]: ${w.trend}이면 from/to 방향이 맞아야 함`);
+    if (w.from_c < -10 || w.from_c > 35 || w.to_c < -10 || w.to_c > 35) errors.push(`temp_windows[${i}]: 기온 범위`);
+    if (!w.note?.trim()) errors.push(`temp_windows[${i}]: note 없음`);
+    checkRefs(`temp_windows[${i}]`, w.refs);
+  }
+
   for (const g of doc.guides) {
     if (!GUIDE_SECTIONS.includes(g.section)) errors.push(`guides: 알 수 없는 섹션 ${g.section}`);
+    if (!Array.isArray(g.summary) || g.summary.length < 1 || g.summary.length > 4) errors.push(`guides.${g.section}: 핵심(summary) 1~4줄`);
+    for (const line of g.summary ?? []) if (line.length > 70) errors.push(`guides.${g.section}: 핵심 한 줄은 70자 이내 (${line.slice(0, 20)}…)`);
     if (!g.body.trim()) errors.push(`guides.${g.section}: 본문 없음`);
     checkRefs(`guides.${g.section}`, g.refs);
   }
