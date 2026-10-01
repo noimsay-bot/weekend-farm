@@ -5,19 +5,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button, ErrorText } from "@/components/ui";
 
-export function CropActions({ cropId, canConfirm, showConfirm }: { cropId: string; canConfirm: boolean; showConfirm: boolean }) {
+export function CropActions({ cropId }: { cropId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  async function confirm() {
-    setBusy(true);
-    setError("");
-    const { error } = await createClient().rpc("confirm_crop", { p_crop_id: cropId });
-    setBusy(false);
-    if (error) return setError(`확정하지 못했어요. ${error.message}`);
-    router.refresh();
-  }
 
   async function remove() {
     if (!window.confirm("이 작물을 삭제할까요? 되돌릴 수 없어요.")) return;
@@ -33,11 +24,6 @@ export function CropActions({ cropId, canConfirm, showConfirm }: { cropId: strin
   return (
     <div className="mt-4 flex flex-col gap-2">
       <ErrorText>{error}</ErrorText>
-      {showConfirm && (
-        <Button onClick={confirm} disabled={busy || !canConfirm}>
-          승인 (원문 없음: 필수 필드를 모두 입력한 뒤)
-        </Button>
-      )}
       <Button variant="secondary" onClick={remove} disabled={busy}>
         작물 삭제
       </Button>

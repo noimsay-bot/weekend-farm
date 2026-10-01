@@ -1,0 +1,181 @@
+{
+  "name": "쪽파",
+  "category": "양념채소",
+  "summary": "씨앗이 아니라 비늘줄기(종구)를 심어 키우는 양념채소. 서늘한 날씨에 잘 자라 김장용은 8월 하순~9월 초에 심어 40~60일 뒤 거둔다. 거름을 많이 먹지만 물은 적게 좋아하고, 고자리파리 같은 땅속 해충 관리가 성패를 가른다. 남은 포기는 겨울을 나고 이듬해 봄에 다시 거둘 수 있다.",
+  "family": {
+    "value": "백합과",
+    "confidence": "medium",
+    "refs": ["r1"],
+    "evidence": "농사로 과명 '백합과'(학명 Allium wakegi). 최근 분류 체계에서는 파속을 수선화과로 두기도 한다."
+  },
+  "fields": {
+    "sow_method": {
+      "value": "direct",
+      "confidence": "high",
+      "refs": ["r1", "r2"],
+      "evidence": "씨앗으로 번식하지 않고 종구(비늘줄기)를 밭에 바로 심는다. 모종을 기르지 않는다."
+    },
+    "season": {
+      "value": "autumn",
+      "confidence": "medium",
+      "refs": ["r1", "r2"],
+      "evidence": "대부분 김장용으로 8월 하순~9월 상순에 심어 10~11월에 거둔다. 봄 재배(4월 심기, 6~7월 수확)도 가능하고, 월동해서 이듬해 봄에 다시 자란다."
+    },
+    "seedling_days": { "value": null, "confidence": "high", "refs": [], "evidence": "종구를 바로 심어 육묘하지 않는다." },
+    "min_temp_c": {
+      "value": 15,
+      "confidence": "medium",
+      "refs": ["r1", "r2"],
+      "evidence": "심기 적합일 판정용 최저기온. 생육 적온 15~25℃(농사로), 15~20℃(국립원예특작과학원)의 하한."
+    },
+    "max_temp_c": {
+      "value": null,
+      "confidence": "medium",
+      "refs": [],
+      "evidence": "생육 적온 상한(20~25℃)은 있으나, 김장용을 심는 8월 하순엔 낮 기온이 이를 넘고 종구는 30℃ 이상을 겪어야 휴면에서 깨어난다(농사로). 심기 적합일 판정 기준으로 쓰기 어려워 비워 둠."
+    },
+    "late_frost_sensitive": { "value": null, "confidence": "low", "refs": [], "evidence": "가을 재배 기준. 저온에 강해 월동한다." },
+    "days_to_harvest": {
+      "value": 50,
+      "confidence": "medium",
+      "refs": ["r1", "r2", "v1", "v5"],
+      "evidence": "심은 뒤 일수. 40일부터 수확 가능(농사로, 국립원예특작과학원). 품질은 50~60일이 좋고 두 달을 넘기면 질겨진다(광닭이). 수확일에서 50일을 거꾸로 세어 심는다(농사친구)."
+    },
+    "harvest_window_days": {
+      "value": 20,
+      "confidence": "medium",
+      "refs": ["r1", "v1"],
+      "evidence": "특별한 수확 시기 없이 필요할 때 큰 포기부터 거둔다(농사로). 40~60일 사이, 두 달을 넘기지 않는 것이 좋다(광닭이)."
+    },
+    "rotation_risk": {
+      "value": "high",
+      "confidence": "low",
+      "refs": ["v4"],
+      "evidence": "병해충 피해가 있었거나 파를 기른 밭은 연작을 피하라(농사친구). 공공기관 자료에서 수치는 확인하지 못함."
+    },
+    "rest_seasons": { "value": null, "confidence": "low", "refs": [], "evidence": "휴작 작기 수를 제시한 출처 없음." },
+    "overwinter_default": {
+      "value": null,
+      "confidence": "medium",
+      "refs": [],
+      "evidence": "가을 작기 작물로 등록. 월동이 가능해 남은 포기를 봄까지 두어도 된다(농사로, 농사친구)."
+    },
+    "harvest_avoid_rain": { "value": null, "confidence": "low", "refs": [], "evidence": "출처 없음." },
+    "rain_wait_days": { "value": null, "confidence": "low", "refs": [], "evidence": "출처 없음." },
+    "schedule_tolerance_days": { "value": null, "confidence": "low", "refs": [], "evidence": "출처 없음." },
+    "plant_spacing_cm": {
+      "value": 10,
+      "confidence": "high",
+      "refs": ["r1", "r2", "v1"],
+      "evidence": "농사로 포기 사이 10cm, 국립원예특작과학원 15×15~20×10cm, 광닭이 10cm. 농사친구는 15cm. 한 종구가 가을까지 8~15개로 나뉘므로 너무 좁게 심지 않는다."
+    },
+    "row_spacing_cm": {
+      "value": 20,
+      "confidence": "high",
+      "refs": ["r1", "r2"],
+      "evidence": "농사로 골 사이 20cm, 국립원예특작과학원 20×10cm."
+    },
+    "plants_per_pyeong": {
+      "value": 165,
+      "confidence": "medium",
+      "refs": ["r1", "r2"],
+      "evidence": "줄 20cm × 포기 10cm(0.02㎡) 기준으로 1평(3.3㎡)을 나눈 계산값. 큰 종구는 1개, 작은 것은 2~3개를 한 자리에 심는다."
+    },
+    "pruning_required": {
+      "value": false,
+      "confidence": "high",
+      "refs": ["r1", "r2"],
+      "evidence": "가지치기 과정이 없다. 심기 전에 종구의 마른 뿌리와 윗부분을 조금 다듬을 뿐이다."
+    },
+    "pruning_method": { "value": null, "confidence": "high", "refs": [], "evidence": "가지치기 대상 아님." },
+    "pruning_timing": { "value": null, "confidence": "high", "refs": [], "evidence": "가지치기 대상 아님." },
+    "heat_tolerance": {
+      "value": "low",
+      "confidence": "high",
+      "refs": ["r1", "r2"],
+      "evidence": "여름 고온·장일에는 휴면에 들어간다(농사로, 국립원예특작과학원). 저온에는 강하다."
+    },
+    "watering_interval_days": {
+      "value": 7,
+      "confidence": "medium",
+      "refs": ["r1", "v1"],
+      "evidence": "일주일에 한 번, 흠뻑 스며들게(농사로, 광닭이). 비가 온 주는 거른다. 광닭이의 다른 영상은 겉흙이 많이 마르면 3~4일 간격도 권한다. 매일 주면 과습과 파리류 해충을 부른다."
+    },
+    "water_need": {
+      "value": "low",
+      "confidence": "medium",
+      "refs": ["r1", "v2"],
+      "evidence": "건조한 것을 좋아하고 물을 많이 주면 뿌리가 상한다(농사로). 과습하면 고자리파리 등이 몰려 산란한다(광닭이). 다만 너무 마르면 칼슘 결핍으로 잎끝이 마른다."
+    },
+    "rain_wait_condition": { "value": null, "confidence": "low", "refs": [], "evidence": "출처 없음." }
+  },
+  "calendars": [
+    { "region": "중부", "cropping_type": "김장용", "activity": "sow", "start": "08-25", "end": "09-10", "refs": ["r1", "r2", "v1"] },
+    { "region": "중부", "cropping_type": "김장용", "activity": "harvest", "start": "10-15", "end": "11-20", "refs": ["r1", "r2"] },
+    { "region": "중부", "cropping_type": "추석용", "activity": "sow", "start": "08-10", "end": "08-20", "refs": ["v3"] },
+    { "region": "중부", "cropping_type": "봄 재배", "activity": "sow", "start": "04-01", "end": "04-30", "refs": ["r1", "r3"] },
+    { "region": "중부", "cropping_type": "봄 재배", "activity": "harvest", "start": "06-01", "end": "07-15", "refs": ["r1", "r3"] }
+  ],
+  "fertilizer": {
+    "base": {
+      "compost_kg_per_10a": 1500,
+      "lime_kg_per_10a": null,
+      "note": "거름을 많이 먹는 작물. 국립원예특작과학원 퇴비 1,500kg/10a(전량 밑거름), 농사로는 심기 30일 전 1㎡당 퇴비 2~3kg과 원예용 복합비료 300g. 덜 썩은 가축분 퇴비는 파리를 부르니 2주 이상 전에 넣는다(농사친구).",
+      "refs": ["r1", "r2", "v4"]
+    },
+    "top_dressing": [
+      {
+        "days_after_planting": 25,
+        "note": "잎이 3~4장(10cm쯤) 나왔을 때, 심은 지 25~30일. 뿌리가 연해 비료가 직접 닿지 않게 주고 물을 충분히. 질소만 많이 주면 웃자라 병해충에 약해지니 질소·칼리 비료로. 오래 기를 땐 한 달 뒤 한 번 더.",
+        "refs": ["r1", "v1", "v2"]
+      }
+    ]
+  },
+  "guides": [
+    {
+      "section": "소개",
+      "body": "아시아가 원산인 파속 채소로 줄기와 잎을 먹는다. 씨앗 대신 비늘줄기(종구)를 심는 영양번식 작물이다. 15~25℃에서 잘 자라고 저온에 강하지만, 여름 고온에는 휴면에 들어간다.\n\n한 종구가 자라면서 8~15개로 나뉘고(분얼), 겨울을 나면 봄에 한 번 더 나뉜다. 남은 포기는 이듬해 봄에 새싹이 올라와 다시 거둘 수 있다.",
+      "refs": ["r1", "r2", "v1"]
+    },
+    {
+      "section": "밭 준비",
+      "body": "- 볕이 잘 들고 물이 잘 빠지는 곳을 고른다.\n- 심기 2주~30일 전에 잘 썩은 퇴비(1㎡당 2~3kg)와 복합비료를 넣는다. 덜 썩은 퇴비는 파리를 부른다.\n- 고자리파리·뿌리응애 같은 땅속 해충이 가장 큰 문제다. 심기 전에 토양 살충 처리를 꼭 한다.\n- 두둑은 비가 고이지 않게 높이고, 구멍 뚫린 비닐로 멀칭하면 물과 잡초 관리가 쉽다. 북을 줄 계획이면 멀칭 없이 길러도 된다.",
+      "refs": ["r1", "r2", "v1", "v4"]
+    },
+    {
+      "section": "파종·정식",
+      "body": "- 시기: 김장용은 8월 하순~9월 10일 안팎, 추석에 쓰려면 추석 55일쯤 전(8월 중순).\n- 종구: 단단하고 윤기 있는 것을 고른다. 엄지만 한 것은 1개, 작은 것은 2~3개를 붙여 심는다. 마른 뿌리와 윗부분을 2mm쯤 다듬으면 싹이 고르게 난다.\n- 휴면: 종구는 30℃ 이상을 20일 넘게 겪어야 싹이 튼다. 일찍 심을 때는 햇볕 드는 곳에 망에 담아 1~3주 걸어 둔다.\n- 간격: 줄 20cm × 포기 10cm.\n- 깊이: 5cm쯤 파서 넣고 윗부분에 흙이 2~3cm 덮이게 한다.",
+      "refs": ["r1", "r2", "v1", "v3", "v5"]
+    },
+    {
+      "section": "관리",
+      "body": "- 물: 일주일에 한 번 흠뻑. 매일 주면 뿌리가 상하고 파리류가 몰려와 알을 낳는다. 아침에 주고 초저녁은 피한다.\n- 웃거름: 잎이 3~4장 나왔을 때(심고 25~30일) 한 번. 뿌리에 비료가 직접 닿지 않게 한다. 질소만 많이 주면 웃자란다.\n- 북주기: 흰 부분을 길게 하려면 한두 번 흙을 북돋운다.\n- 칼슘: 한 뼘 이상 자라고 비가 줄어드는 때에 잎끝 마름(칼슘 결핍)이 잘 온다. 물을 규칙적으로 주는 것이 먼저다.\n- 월동용은 따로 심고 처음부터 한랭사를 씌우면 봄까지 농약 없이 기를 수 있다.",
+      "refs": ["r1", "v1", "v2"]
+    },
+    {
+      "section": "병해충",
+      "body": "- 고자리파리: 애벌레가 땅속 뿌리를 먹는다. 9월에 다시 활동하니 심기 전 토양 살충이 필수다.\n- 굴파리: 잎에 알을 낳아 애벌레가 잎 속을 파먹는다. 토양 살충만으로는 못 막으니 잎 방제도 한다.\n- 뿌리썩음병, 균핵병 같은 곰팡이병은 과습한 가을에 잘 생긴다.\n- 잎끝이 노랗게 마를 때는 칼슘 결핍(물 부족)인지 뿌리 해충 피해인지 먼저 구분한다.\n- 농약은 쪽파에 등록된 제품인지 라벨을 확인하고 쓴다.",
+      "refs": ["r1", "r2", "v1", "v2"]
+    },
+    {
+      "section": "수확",
+      "body": "- 시기: 심고 40일부터 거둘 수 있고, 50~60일이 가장 좋다. 두 달을 넘기면 질겨진다.\n- 방법: 포기가 크고 잎이 긴 것부터 차례로 뽑는다.\n- 남은 포기는 겨울을 나고 3월에 새싹이 돋아 4월부터 다시 거둔다.\n- 종구용: 이듬해 5월 말~6월 초 잎이 다 마르면 캐서 그늘에 말려 둔다.",
+      "refs": ["r1", "r2", "v1", "v4"]
+    },
+    {
+      "section": "자주 하는 실수",
+      "body": "- 물을 매일 줘서 뿌리가 상하고 파리를 부른다.\n- 토양 살충 없이 심어 고자리파리에 당한다.\n- 종구를 너무 촘촘히 심어 알이 작아진다.\n- 웃자라라고 요소를 뿌린다.\n- 잎끝 마름을 무조건 칼슘 부족으로 여겨 해충 방제 시기를 놓친다.\n- 수확을 미루다 억세진다.",
+      "refs": ["r1", "v1", "v2"]
+    }
+  ],
+  "refs": [
+    { "key": "r1", "kind": "doc", "title": "텃밭가꾸기 - 쪽파 (교사를 위한 스쿨가드닝 매뉴얼)", "url": "https://www.nongsaro.go.kr/portal/ps/psz/psza/contentSub.ps?menuId=PS00199&cntntsNo=218956", "publisher": "농촌진흥청 농사로" },
+    { "key": "r2", "kind": "doc", "title": "쪽파의 특성과 재배방법 소개", "url": "https://www.rda.go.kr/middlePopOpenPopNongsaroDBView.do?no=2094", "publisher": "농촌진흥청 국립원예특작과학원" },
+    { "key": "r3", "kind": "doc", "title": "텃밭에서 쪽파 키우기 (2020년 9월호)", "url": "https://www.rda.go.kr/webzine/2020/09/sub4-2.html", "publisher": "농촌진흥청 웹진" },
+    { "key": "v1", "kind": "video", "title": "쪽파 파종 전에 이 세가지만 기억하세요 - 굵고 실한 쪽파 수확을 위한 파종법과 재배법", "url": "https://www.youtube.com/watch?v=PAiME-pZK7k", "publisher": "광닭이", "summary": "토양 해충(고자리파리) 방제, 물은 일주일에 한 번 충분히, 잎 3~4장 때 첫 웃거름·한 달 뒤 두 번째. 종구 윗부분 자르기는 고르게 싹 나게 하려는 것. 김장용은 9월 10일 안에 심고 50~60일 기르기(두 달 넘기면 질김). 큰 종구 1개·작은 것 2~3개, 5cm 깊이에 흙 2.5cm 덮기, 간격 10cm. 월동용은 처음부터 한랭사." },
+    { "key": "v2", "kind": "video", "title": "쪽파! 이 세가지 실수로 일찍 병들고 죽습니다 - 물주기부터 당장 바꾸세요", "url": "https://www.youtube.com/watch?v=7NQJhclNrec", "publisher": "광닭이", "summary": "매일 물주기는 파리류 산란과 곰팡이병을 부른다: 3~4일 간격, 아침에. 토양 살충만으로는 잎 속을 파먹는 굴파리를 못 막으니 잎 방제도. 웃거름은 심고 25~30일에 한 번, 질소 과다는 웃자람. 칼슘은 한 뼘 이상 자랐을 때, 잎끝 마름은 병해충과 구분." },
+    { "key": "v3", "kind": "video", "title": "쪽파 실패할 수 없는 재배원칙 5가지 - 추석용과 김장용은 나눠 심으세요", "url": "https://www.youtube.com/watch?v=JFVrhwAbKlE", "publisher": "광닭이", "summary": "추석용은 8월 중순(추석 약 55일 전), 김장용은 8월 말~9월 초에 심는다." },
+    { "key": "v4", "kind": "video", "title": "쪽파. 이렇게 심고 가꾸세요.", "url": "https://www.youtube.com/watch?v=nam-VJFvRKY", "publisher": "농사친구", "summary": "김장용 8월 말~9월 초, 수확일에서 50일 역산. 한겨울 빼고 언제든 재배 가능하고 월동 후 4월에 다시 수확. 퇴비는 2주 전, 토양 살충 필수, 파를 기른 밭은 연작 피하기, 두둑 20cm 이상·유공 비닐 멀칭, 여름 재배 시 휴면 타파와 종구 소독. 자사 제품 홍보 포함." },
+    { "key": "v5", "kind": "video", "title": "여름쪽파/가을쪽파 재배! 쪽파키우기, 답은 간단합니다!", "url": "https://www.youtube.com/watch?v=YqbvWEvOAts", "publisher": "농사친구", "summary": "생육 적온 15~25℃, 주로 8월 중순~9월 초에 심어 50~70일 재배. 다비성이지만 수분이 많으면 병충해·웃자람, 마르면 생육 불량. 평당 종구 600~800g, 30℃ 이상에서 일주일 이상 두어 휴면 타파, 간격 15cm·깊이 5cm(여름엔 5~10cm·2cm). 자사 제품 홍보 포함." }
+  ]
+}

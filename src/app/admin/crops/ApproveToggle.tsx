@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // 승인: 원문에서 뽑은 값은 모두 승인하고, 원문에 없는 필드는 비워 둔 채 확정한다 (quick_confirm_crops).
 // 승인 취소: 다시 검토 중으로 돌린다 (unconfirm_crop). 계획에 쓰인 작물은 취소할 수 없다.
-export function ApproveToggle({ cropId, confirmed, hasSource }: { cropId: string; confirmed: boolean; hasSource: boolean }) {
+export function ApproveToggle({ cropId, confirmed, researched }: { cropId: string; confirmed: boolean; researched: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -23,8 +23,9 @@ export function ApproveToggle({ cropId, confirmed, hasSource }: { cropId: string
     router.refresh();
   }
 
-  if (!confirmed && !hasSource) {
-    return <span className="w-20 shrink-0 text-center text-xs text-amber-700">원문 없음</span>;
+  // 자료 작성 전 작물은 승인할 수 없다 (이미 승인된 것은 취소만 가능)
+  if (!confirmed && !researched) {
+    return <span className="w-20 shrink-0 text-center text-xs text-neutral-400">자료 준비 중</span>;
   }
   return (
     <span className="flex w-20 shrink-0 flex-col items-center">

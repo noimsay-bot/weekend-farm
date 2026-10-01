@@ -15,13 +15,14 @@ export default async function AdminCropPage({ params }: PageProps<"/admin/crops/
   const { data: isAdmin } = await supabase.rpc("is_app_admin");
   if (!isAdmin) redirect("/admin/crops");
 
-  const [{ data: crop }, { data: sources }, { data: calendars }, { data: fertilizers }, { data: pests }] =
+  const [{ data: crop }, { data: sources }, { data: calendars }, { data: fertilizers }, { data: pests }, { count: guideCount }] =
     await Promise.all([
       supabase.from("crops").select("*, crop_families(name)").eq("id", id).maybeSingle(),
       supabase.from("crop_field_sources").select("*").eq("crop_id", id),
       supabase.from("crop_regional_calendars").select("*").eq("crop_id", id).order("cropping_type"),
       supabase.from("crop_fertilizer_schedules").select("*").eq("crop_id", id).order("stage").order("sequence"),
       supabase.from("crop_pest_controls").select("*").eq("crop_id", id).order("pest_name"),
+      supabase.from("crop_guides").select("id", { count: "exact", head: true }).eq("crop_id", id),
     ]);
   if (!crop) notFound();
   const c = crop as Crop & { crop_families: { name: string } | null };
@@ -39,7 +40,7 @@ export default async function AdminCropPage({ params }: PageProps<"/admin/crops/
         ← 작물 목록
       </Link>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <ApproveToggle cropId={c.id} confirmed={c.status === "confirmed"} hasSource={Boolean(c.source_url)} />
+        <ApproveToggle cropId={c.id} confirmed={c.status === "confirmed"} researched={(guideCount ?? 0) > 0} />
         <span className="text-neutral-600">미검토 필드 {missing.length}개</span>
         {c.source_url && (
           <a href={c.source_url} target="_blank" rel="noreferrer" className="text-primary underline">
@@ -97,7 +98,7 @@ export default async function AdminCropPage({ params }: PageProps<"/admin/crops/
         ))}
       </section>
 
-      <CropActions cropId={c.id} showConfirm={!c.source_url && c.status !== "confirmed"} canConfirm={missing.length === 0} />
+      <CropActions cropId={c.id} />
     </Screen>
   );
 }
