@@ -4,7 +4,7 @@
 
 ## 현재 상태
 - 지시서 P0~P10 코드 완료, `main`에 push, Vercel 배포됨 (https://weekend-farm.vercel.app).
-- Supabase 마이그레이션 P0~P5 적용됨. `20261002000001_realtime.sql`(대시보드 실시간 반영)도 적용됨. **`20261002000002_quick_confirm.sql`(작물 간단 확정)은 SQL Editor에서 적용 필요.**
+- Supabase 마이그레이션 P0~P5 적용됨. `20261002000001_realtime.sql`(대시보드 실시간 반영)도 적용됨. **`20261002000002_quick_confirm.sql`, `20261002000003_unconfirm_crop.sql`(작물별 승인/승인 취소)은 SQL Editor에서 적용 필요.**
 - Vercel 환경변수(Production): Supabase URL·publishable key, service role key, VAPID 3개, CRON_SECRET.
 - GitHub Actions secrets: `APP_URL`, `CRON_SECRET`.
 - 일일 크론 수동 실행 200 확인. 기상청 키가 없어 날씨는 아직 건너뜀.

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button, ErrorText } from "@/components/ui";
 
-export function CropActions({ cropId, canConfirm }: { cropId: string; canConfirm: boolean }) {
+export function CropActions({ cropId, canConfirm, showConfirm }: { cropId: string; canConfirm: boolean; showConfirm: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -33,9 +33,11 @@ export function CropActions({ cropId, canConfirm }: { cropId: string; canConfirm
   return (
     <div className="mt-4 flex flex-col gap-2">
       <ErrorText>{error}</ErrorText>
-      <Button onClick={confirm} disabled={busy || !canConfirm}>
-        확정 (앱에 노출)
-      </Button>
+      {showConfirm && (
+        <Button onClick={confirm} disabled={busy || !canConfirm}>
+          승인 (원문 없음: 필수 필드를 모두 입력한 뒤)
+        </Button>
+      )}
       <Button variant="secondary" onClick={remove} disabled={busy}>
         작물 삭제
       </Button>

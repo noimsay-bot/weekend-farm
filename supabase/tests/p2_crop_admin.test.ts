@@ -106,6 +106,14 @@ describe("crop confirmation", () => {
     ]);
   });
 
+  it("unconfirm returns a crop to draft unless a plan uses it", async () => {
+    const [c] = await asUser<{ id: string }>(db, FIRST, "insert into crops (name, status) values ('쑥갓', 'confirmed') returning id");
+    await expect(asUser(db, SECOND, "select unconfirm_crop($1)", [c.id])).rejects.toThrow(/admin only/);
+    await asUser(db, FIRST, "select unconfirm_crop($1)", [c.id]);
+    const { rows } = await db.query<{ status: string }>("select status from crops where id = $1", [c.id]);
+    expect(rows[0].status).toBe("draft");
+  });
+
   it("rejects unknown fields", async () => {
     await expect(asUser(db, FIRST, "select set_crop_field($1, 'status', 'confirmed')", [cropId])).rejects.toThrow(
       /unknown field/,

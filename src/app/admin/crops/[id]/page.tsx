@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OPTIONAL_CROP_FIELDS, REQUIRED_CROP_FIELDS } from "@/lib/crop-fields";
 import { Screen } from "@/components/ui";
-import { QuickConfirm } from "../QuickConfirm";
+import { ApproveToggle } from "../ApproveToggle";
 import { CropActions } from "./CropActions";
 import { FieldRow, type FieldSource } from "./FieldRow";
 
@@ -39,22 +39,14 @@ export default async function AdminCropPage({ params }: PageProps<"/admin/crops/
         ← 작물 목록
       </Link>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className={c.status === "confirmed" ? "font-semibold text-primary" : "text-neutral-600"}>
-          {c.status === "confirmed" ? "확정됨" : `검토 중 · 남은 필드 ${missing.length}개`}
-        </span>
+        <ApproveToggle cropId={c.id} confirmed={c.status === "confirmed"} hasSource={Boolean(c.source_url)} />
+        <span className="text-neutral-600">미검토 필드 {missing.length}개</span>
         {c.source_url && (
           <a href={c.source_url} target="_blank" rel="noreferrer" className="text-primary underline">
             농사로 원문
           </a>
         )}
       </div>
-      {c.status !== "confirmed" && c.source_url && (
-        <QuickConfirm
-          cropIds={[c.id]}
-          label="원문 값 승인하고 바로 확정"
-          confirmText={`${c.name}을(를) 확정할까요? 원문에서 뽑은 값은 승인되고, 값이 없는 필드는 빈 값으로 남아요.`}
-        />
-      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">필수 필드</h2>
@@ -105,7 +97,7 @@ export default async function AdminCropPage({ params }: PageProps<"/admin/crops/
         ))}
       </section>
 
-      <CropActions cropId={c.id} canConfirm={missing.length === 0 && c.status !== "confirmed"} />
+      <CropActions cropId={c.id} showConfirm={!c.source_url && c.status !== "confirmed"} canConfirm={missing.length === 0} />
     </Screen>
   );
 }
