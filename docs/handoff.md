@@ -1,10 +1,11 @@
 # 인수인계 (다른 컴퓨터에서 이어서 작업)
 
-최종 갱신: 2026-09-30
+최종 갱신: 2026-10-06
 
 ## 현재 상태
 - 지시서 P0~P10 코드 완료, `main`에 push, Vercel 배포됨 (https://weekend-farm.vercel.app).
 - Supabase 마이그레이션 P0~P5 적용됨. `20261002000001_realtime.sql`(대시보드 실시간 반영)도 적용됨. **`20261002000002_quick_confirm.sql`, `20261002000003_unconfirm_crop.sql`(작물별 승인/승인 취소), `20261003000001_crop_encyclopedia.sql`(작물 백과사전) 적용됨. `20261003000002_field_beds.sql`(밭 구획) 적용됨. `20261004000001_temp_windows.sql`(기온 기준·재배법 요약) 적용됨. **`20261004000002_bed_sowing.sql`(엇갈려 심기·줄뿌림/점뿌림/흩어뿌림), `20261004000003_record_first.sql`(기록부터 하기: record_planting / place_planting) SQL Editor에서 순서대로 적용 필요 — 적용 전에 배포하면 계획·홈 화면이 깨진다.**
+- `20261006000001_staggered_density.sql`(엇갈려 심기 밀도) 적용됨 (2026-10-06).
 - Vercel 환경변수(Production): Supabase URL·publishable key, service role key, VAPID 3개, CRON_SECRET.
 - GitHub Actions secrets: `APP_URL`, `CRON_SECRET`.
 - 일일 크론 수동 실행 200 확인. 기상청 키가 없어 날씨는 아직 건너뜀.
