@@ -2,9 +2,11 @@
 
 // 밭 그림: 흙(고랑) 위에 두둑·네모 밭을 놓고, 심은 작물은 포기 위치에 원으로 그린다.
 // 격자는 자 역할만 한다. 새로 놓거나 고치는 구획(floating)은 위에 떠 있는 상자로 그려
-// 끌어 옮기고 오른쪽 아래 손잡이로 크기를 바꾼다 (10cm 단위). 고정된 구획은 움직이지 않는다.
+// 끌어 옮기고 오른쪽 아래 손잡이로 크기를 바꾼다. 10cm 격자와 다른 구획·밭 가장자리에 자석처럼 붙는다.
+// 고정된 구획은 움직이지 않는다.
 import { useRef, useState } from "react";
-import { plantCountOf, plantPositions, scatterPoints, segmentRect, snap, sowLines, type Bed, type BedPlanting } from "@/lib/field/beds";
+import { plantCountOf, plantPositions, scatterPoints, segmentRect, sowLines, type Bed, type BedPlanting } from "@/lib/field/beds";
+import { snapMove, snapResize, STEP_CM } from "@/lib/field/layout";
 import { toneMap } from "@/lib/field/colors";
 
 export type FieldMarker = "todo" | "warn";
@@ -77,18 +79,12 @@ export function FieldMap({
     const dx = p.x - drag.startX;
     const dy = p.y - drag.startY;
     const o = drag.orig;
-    const next =
+    const others = beds.filter((b) => b.id !== o.id);
+    const field = { w: widthCm, h: heightCm };
+    const next: Bed =
       drag.kind === "move"
-        ? {
-            ...o,
-            x_cm: Math.min(Math.max(0, snap(o.x_cm + dx)), widthCm - o.w_cm),
-            y_cm: Math.min(Math.max(0, snap(o.y_cm + dy)), heightCm - o.h_cm),
-          }
-        : {
-            ...o,
-            w_cm: Math.min(Math.max(10, snap(o.w_cm + dx)), widthCm - o.x_cm),
-            h_cm: Math.min(Math.max(10, snap(o.h_cm + dy)), heightCm - o.y_cm),
-          };
+        ? { ...o, ...snapMove({ ...o, x_cm: o.x_cm + dx, y_cm: o.y_cm + dy }, others, field) }
+        : { ...o, ...snapResize({ ...o, w_cm: o.w_cm + dx, h_cm: o.h_cm + dy }, others, field) };
     setDraft(next);
     if (floating && drag.id === floating.id) onFloatingChange?.(next);
   }
@@ -126,6 +122,19 @@ export function FieldMap({
       {Array.from({ length: Math.floor(heightCm / 100) }, (_, i) => (
         <line key={`hy${i}`} x1={0} y1={(i + 1) * 100} x2={widthCm} y2={(i + 1) * 100} stroke="#e7e1d1" strokeWidth={unit * 0.08} />
       ))}
+      {/* 상자를 놓는 동안 10cm 보조 눈금 */}
+      {(floating || drag) &&
+        widthCm / STEP_CM <= 300 &&
+        heightCm / STEP_CM <= 300 && (
+          <g pointerEvents="none" stroke="#efe9db" strokeWidth={unit * 0.04}>
+            {Array.from({ length: Math.floor(widthCm / STEP_CM) }, (_, i) =>
+              (i + 1) % 10 ? <line key={`mx${i}`} x1={(i + 1) * STEP_CM} y1={0} x2={(i + 1) * STEP_CM} y2={heightCm} /> : null,
+            )}
+            {Array.from({ length: Math.floor(heightCm / STEP_CM) }, (_, i) =>
+              (i + 1) % 10 ? <line key={`my${i}`} x1={0} y1={(i + 1) * STEP_CM} x2={widthCm} y2={(i + 1) * STEP_CM} /> : null,
+            )}
+          </g>
+        )}
       {/* 자 눈금 (m) */}
       {Array.from({ length: Math.floor((widthCm - 1) / 100) }, (_, i) => (
         <text key={`rx${i}`} x={(i + 1) * 100} y={unit * 1.2} fontSize={unit * 0.9} textAnchor="middle" fill="#b9ae93" pointerEvents="none">

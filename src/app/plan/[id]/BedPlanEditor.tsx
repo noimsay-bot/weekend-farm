@@ -1,8 +1,9 @@
 "use client";
 
 // 구획 기반 계획 편집기.
-// '두둑 추가'를 누르면 떠 있는 상자가 나오고, 끌어 옮기고 크기를 맞춘 뒤 '확인'을 누르면 그 자리에 고정된다.
-// 고정된 구획을 누르면 작물을 고르고(포기 간격대로 자동 배정), 몇 줄·줄뿌림/점뿌림 등을 정한다.
+// '작물 심기': 작물 → 몇 포기를 어떻게 심을지 → 추천 크기의 상자가 뜨고, 끌어 옮기고 크기를 맞춘 뒤 '확인'하면
+// 구획과 심기가 함께 고정된다. 상자는 10cm 격자와 다른 구획·밭 가장자리에 자석처럼 붙는다.
+// 빈 구획만 먼저 놓고 나중에 작물을 고르는 기존 방식도 남겨 둔다.
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +23,7 @@ import {
   type SowPattern,
 } from "@/lib/field/beds";
 import { toneMap } from "@/lib/field/colors";
+import { recommendSize, roundStep, type PlantSetup } from "@/lib/field/layout";
 import { seasonOf, todayKst } from "@/lib/season";
 import { FieldMap } from "@/components/FieldMap";
 import { Button, ErrorText } from "@/components/ui";
@@ -73,7 +75,10 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
   const [floating, setFloating] = useState<Bed | null>(null);
   const [bedId, setBedId] = useState<string | null>(null);
   const [bpId, setBpId] = useState<string | null>(null);
-  const [picker, setPicker] = useState<"new" | "change" | null>(null);
+  const [picker, setPicker] = useState<"first" | "new" | "change" | null>(null);
+  // 작물부터 고르는 흐름: 고른 작물과 심는 방법 (상자를 놓기 전 setup → 놓는 중 pending)
+  const [setup, setSetup] = useState<(PlantSetup & { cropId: string }) | null>(null);
+  const [pending, setPending] = useState<(PlantSetup & { cropId: string }) | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -132,10 +137,13 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
     setFloating({ id: NEW_BED, kind, x_cm: spot.x, y_cm: spot.y, w_cm: w, h_cm: h, label: null });
   }
 
+  // 위치·크기는 10cm 단위, 밭 안으로
   function clampBed(next: Bed): Bed {
-    const w = Math.max(10, Math.min(next.w_cm, widthCm));
-    const h = Math.max(10, Math.min(next.h_cm, heightCm));
-    return { ...next, w_cm: w, h_cm: h, x_cm: Math.max(0, Math.min(next.x_cm, widthCm - w)), y_cm: Math.max(0, Math.min(next.y_cm, heightCm - h)) };
+    const w = Math.min(roundStep(next.w_cm), widthCm);
+    const h = Math.min(roundStep(next.h_cm), heightCm);
+    const x = Math.round(next.x_cm / 10) * 10;
+    const y = Math.round(next.y_cm / 10) * 10;
+    return { ...next, w_cm: w, h_cm: h, x_cm: Math.max(0, Math.min(x, widthCm - w)), y_cm: Math.max(0, Math.min(y, heightCm - h)) };
   }
 
   // '확인': 떠 있는 상자를 그 자리에 고정한다
@@ -147,6 +155,7 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
       setFloating(null);
       return;
     }
+    let created: Bed | null = null;
     const ok = await run(
       () =>
         createClient()
@@ -154,9 +163,81 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
           .insert({ farm_id: data.plan.farmId, kind: b.kind, x_cm: b.x_cm, y_cm: b.y_cm, w_cm: b.w_cm, h_cm: b.h_cm })
           .select("id, kind, x_cm, y_cm, w_cm, h_cm, label")
           .single(),
-      (row) => setBeds((bs) => [...bs, row as Bed]),
+      (row) => {
+        created = row as Bed;
+        setBeds((bs) => [...bs, row as Bed]);
+      },
     );
-    if (ok) setFloating(null);
+    if (!ok) return;
+    setFloating(null);
+    // 작물부터 고른 경우: 새 구획 전체에 그 작물을 정한 방법대로 심는다
+    const p = pending;
+    const nb = created as Bed | null;
+    if (!p || !nb) return;
+    setPending(null);
+    setBedId(nb.id);
+    await run(
+      () =>
+        createClient()
+          .from("plan_bed_plantings")
+          .insert({
+            plan_id: data.plan.id,
+            bed_id: nb.id,
+            crop_id: p.cropId,
+            rows: nb.kind === "plot" || p.method === "broadcast" ? 1 : p.rows,
+            layout: p.layout,
+            method: p.method,
+            start_cm: 0,
+            length_cm: null,
+            plant_count: countsPlants(p.method) ? p.count : null,
+          })
+          .select("id, bed_id, crop_id, rows, layout, method, start_cm, length_cm, plant_count, carried_from_planting_id")
+          .single(),
+      (row) => {
+        setBps((ps) => [...ps, row as BedPlanting]);
+        setBpId((row as BedPlanting).id);
+      },
+      true,
+    );
+  }
+
+  // 정한 방법의 추천 크기로 상자를 띄운다
+  function placeSetup(sz: { kind: Bed["kind"]; w_cm: number; h_cm: number }) {
+    if (!setup) return;
+    setPending(setup);
+    setSetup(null);
+    openNew(sz.kind, { w_cm: sz.w_cm, h_cm: sz.h_cm });
+  }
+
+  // 밭 초기화: 이 작기의 심기와, 다른 작기에서 쓰지 않는 구획을 모두 지운다 (이월분·다른 작기에 쓰인 구획은 남김)
+  async function resetField() {
+    if (!window.confirm("밭 구획과 이 작기의 심기를 모두 지울까요? 다른 작기에 쓰였거나 지난 작기에서 이어진 구획은 남아요.")) return;
+    const supabase = createClient();
+    setBusy(true);
+    setError("");
+    const del = await supabase.from("plan_bed_plantings").delete().eq("plan_id", data.plan.id).is("carried_from_planting_id", null);
+    if (del.error) {
+      setBusy(false);
+      setError("초기화하지 못했어요.");
+      return;
+    }
+    const ids = beds.map((b) => b.id);
+    const { data: used } = ids.length ? await supabase.from("plan_bed_plantings").select("bed_id").in("bed_id", ids) : { data: [] };
+    const keep = new Set((used ?? []).map((u) => u.bed_id as string));
+    const removable = ids.filter((id) => !keep.has(id));
+    if (removable.length) {
+      const r = await supabase.from("field_beds").delete().in("id", removable);
+      if (r.error) setError("일부 구획을 지우지 못했어요.");
+    }
+    setBps((ps) => ps.filter((x) => x.carried_from_planting_id));
+    setBeds((bs) => bs.filter((b) => keep.has(b.id)));
+    setBedId(null);
+    setBpId(null);
+    setFloating(null);
+    setPending(null);
+    await supabase.rpc("sync_plan_bed_cells", { p_plan_id: data.plan.id });
+    await refresh();
+    setBusy(false);
   }
 
   async function saveBed(next: Bed) {
@@ -281,15 +362,41 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {!floating && (
-        <div className="grid grid-cols-2 gap-2">
-          <button onClick={() => openNew("bed")} disabled={busy} className="h-11 rounded-xl border border-line bg-white text-sm font-medium">
-            + 두둑 추가
-          </button>
-          <button onClick={() => openNew("plot")} disabled={busy} className="h-11 rounded-xl border border-line bg-white text-sm font-medium">
-            + 네모 밭 추가
-          </button>
+      {!floating && !setup && editable && (
+        <div className="flex flex-col gap-2">
+          <Button onClick={() => setPicker("first")} disabled={busy}>
+            + 작물 심기
+          </Button>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => openNew("bed")} disabled={busy} className="h-10 rounded-xl border border-line bg-white text-xs">
+              빈 두둑만
+            </button>
+            <button onClick={() => openNew("plot")} disabled={busy} className="h-10 rounded-xl border border-line bg-white text-xs">
+              빈 네모 밭만
+            </button>
+            <button
+              onClick={resetField}
+              disabled={busy || (beds.length === 0 && bps.length === 0)}
+              className="h-10 rounded-xl border border-danger-line bg-white text-xs text-danger disabled:opacity-40"
+            >
+              밭 초기화
+            </button>
+          </div>
         </div>
+      )}
+
+      {setup && (
+        <SetupPanel
+          setup={setup}
+          cropName={cropNames[setup.cropId] ?? ""}
+          spacing={spacingOf(setup.cropId)}
+          sowing={data.sowing[setup.cropId]}
+          maxW={widthCm}
+          maxH={heightCm}
+          onChange={setSetup}
+          onCancel={() => setSetup(null)}
+          onPlace={placeSetup}
+        />
       )}
 
       <div className="rounded-2xl border border-line bg-white p-2">
@@ -319,20 +426,26 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
         />
         <p className="px-1 pt-2 text-xs text-muted">
           {data.widthM}×{data.heightM}m · 눈금 1m
-          {floating ? " · 상자를 끌어 옮기고 초록 손잡이로 크기를 맞춘 뒤 확인" : " · 구획을 눌러 작물을 심어요"}
+          {floating ? " · 끌어 옮기고 초록 손잡이로 크기를 맞춰요 (10cm 단위, 옆 구획에 착 붙어요)" : " · 구획을 눌러 작물을 바꾸거나 더 심어요"}
           {busy && " · 저장 중…"}
         </p>
       </div>
-      {beds.length === 0 && !floating && <p className="text-sm text-muted">&lsquo;두둑 추가&rsquo;를 눌러 첫 두둑을 놓아 보세요.</p>}
+      {beds.length === 0 && !floating && !setup && (
+        <p className="text-sm text-muted">&lsquo;작물 심기&rsquo;로 작물과 포기 수를 정하면 알맞은 크기의 두둑이 나와요.</p>
+      )}
       <ErrorText>{error}</ErrorText>
 
       {floating && (
         <FloatingPanel
           bed={floating}
           isNew={floating.id === NEW_BED}
+          title={pending ? `${cropNames[pending.cropId] ?? ""} ${countsPlants(pending.method) ? `${pending.count}포기` : SOW_PATTERN_LABEL[pending.method]} 놓기` : undefined}
           busy={busy}
           onChange={(b) => setFloating(clampBed(b))}
-          onCancel={() => setFloating(null)}
+          onCancel={() => {
+            setFloating(null);
+            setPending(null);
+          }}
           onConfirm={confirmFloating}
         />
       )}
@@ -437,7 +550,11 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
           onSelect={(id) => {
             const which = picker;
             setPicker(null);
-            if (which === "new") void plant(id);
+            if (which === "first") {
+              const sw = data.sowing[id];
+              const method: SowPattern = patternsFor(sw)[0] === "plant" ? "plant" : (sw?.pattern ?? "row");
+              setSetup({ cropId: id, count: 8, rows: 1, layout: "parallel", method, lengthCm: 200, orientation: "horizontal" });
+            } else if (which === "new") void plant(id);
             else if (bp && bed) {
               const sw = data.sowing[id];
               const allowed = patternsFor(sw);
@@ -488,6 +605,7 @@ function NumberField({ label, value, onCommit, suffix = "cm", disabled = false }
 function FloatingPanel({
   bed,
   isNew,
+  title,
   busy,
   onChange,
   onCancel,
@@ -495,6 +613,7 @@ function FloatingPanel({
 }: {
   bed: Bed;
   isNew: boolean;
+  title?: string;
   busy: boolean;
   onChange: (b: Bed) => void;
   onCancel: () => void;
@@ -503,7 +622,7 @@ function FloatingPanel({
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-primary-line bg-white p-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">{isNew ? "새 구획 놓기" : "구획 옮기기"}</h2>
+        <h2 className="font-semibold">{title ?? (isNew ? "새 구획 놓기" : "구획 옮기기")}</h2>
         <div className="flex rounded-lg bg-[#f0f0ee] p-0.5 text-xs">
           {(["bed", "plot"] as const).map((k) => (
             <button key={k} onClick={() => onChange({ ...bed, kind: k })} className={`h-7 rounded-md px-3 ${bed.kind === k ? "bg-white shadow-sm" : "text-muted"}`}>
@@ -746,5 +865,136 @@ export function PlantingPanel({
         </button>
       )}
     </div>
+  );
+}
+
+// 작물부터 고르기: 몇 포기를 어떻게 심을지 정하면 추천 크기를 보여주고, 가로·세로를 고쳐 밭에 놓는다.
+function SetupPanel({
+  setup,
+  cropName,
+  spacing,
+  sowing,
+  maxW,
+  maxH,
+  onChange,
+  onCancel,
+  onPlace,
+}: {
+  setup: PlantSetup & { cropId: string };
+  cropName: string;
+  spacing: number | null;
+  sowing: Sowing | undefined;
+  maxW: number;
+  maxH: number;
+  onChange: (s: PlantSetup & { cropId: string }) => void;
+  onCancel: () => void;
+  onPlace: (size: { kind: Bed["kind"]; w_cm: number; h_cm: number }) => void;
+}) {
+  const rec = recommendSize(setup, spacing, sowing?.rowSpacing ?? null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const w = Math.min(size?.w ?? rec.w_cm, maxW);
+  const h = Math.min(size?.h ?? rec.h_cm, maxH);
+  const patterns = patternsFor(sowing);
+  const counts = countsPlants(setup.method);
+  const set = (patch: Partial<PlantSetup>) => {
+    setSize(null); // 방법을 바꾸면 추천 크기로 돌아간다
+    onChange({ ...setup, ...patch });
+  };
+  const choice = (active: boolean) => `h-9 rounded-lg border text-sm ${active ? "border-primary bg-primary-soft font-medium text-primary" : "border-line"}`;
+
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border border-primary-line bg-white p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold">{cropName} 심기</h2>
+        <button className="text-sm text-muted" onClick={onCancel}>
+          취소
+        </button>
+      </div>
+
+      {patterns.length > 1 && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted">심는 방법</span>
+          <div className={`grid gap-1 ${patterns.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
+            {patterns.map((m) => (
+              <button key={m} onClick={() => set({ method: m })} className={choice(setup.method === m)}>
+                {SOW_PATTERN_LABEL[m]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {counts ? (
+        <NumberField label={setup.method === "hill" ? "몇 구멍" : "몇 포기"} value={setup.count} suffix="포기" onCommit={(v) => set({ count: Math.max(1, v) })} />
+      ) : (
+        <NumberField label={setup.method === "broadcast" ? "뿌릴 곳 길이" : "줄 길이"} value={setup.lengthCm} onCommit={(v) => set({ lengthCm: roundStep(v) })} />
+      )}
+
+      {setup.method !== "broadcast" && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted">몇 줄로</span>
+          <div className="grid grid-cols-4 gap-1">
+            {[1, 2, 3, 4].map((n) => (
+              <button key={n} onClick={() => set({ rows: n })} className={choice(setup.rows === n)}>
+                {n === 1 ? "한 줄" : `${n}줄`}
+              </button>
+            ))}
+          </div>
+          {setup.rows > 1 && counts && (
+            <div className="mt-1 grid grid-cols-2 gap-1">
+              {(
+                [
+                  ["parallel", "나란히"],
+                  ["staggered", "엇갈려 (지그재그)"],
+                ] as const
+              ).map(([v, label]) => (
+                <button key={v} onClick={() => set({ layout: v })} className={choice(setup.layout === v)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted">놓는 방향</span>
+        <div className="grid grid-cols-2 gap-1">
+          {(
+            [
+              ["horizontal", "가로로 길게"],
+              ["vertical", "세로로 길게"],
+            ] as const
+          ).map(([v, label]) => (
+            <button key={v} onClick={() => set({ orientation: v })} className={choice(setup.orientation === v)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-[#f6f6f3] p-3 text-sm">
+        <p>
+          추천 크기 <span className="font-semibold">{rec.w_cm}×{rec.h_cm}cm</span>
+          {rec.kind === "plot" && " (네모 밭)"}
+        </p>
+        <p className="text-xs text-muted">
+          {counts
+            ? spacing
+              ? `포기 간격 ${spacing}cm${sowing?.rowSpacing ? ` · 줄간격 ${sowing.rowSpacing}cm` : ""} 기준`
+              : "작물 백과에 포기 간격이 없어 대략 크기예요. 직접 맞춰 주세요."
+            : sowing?.rowSpacing
+              ? `줄간격 ${sowing.rowSpacing}cm 기준`
+              : "줄간격 자료가 없어 20cm로 계산했어요."}
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <NumberField key={`sw${w}`} label="가로" value={w} onCommit={(v) => setSize({ w: Math.min(roundStep(v), maxW), h })} />
+          <NumberField key={`sh${h}`} label="세로" value={h} onCommit={(v) => setSize({ w, h: Math.min(roundStep(v), maxH) })} />
+        </div>
+      </div>
+
+      <Button onClick={() => onPlace({ kind: setup.method === "broadcast" ? "plot" : rec.kind, w_cm: w, h_cm: h })}>밭에 놓기</Button>
+      <p className="text-xs text-muted">놓은 뒤 끌어서 자리를 잡고, 손잡이로 크기를 다듬을 수 있어요.</p>
+    </section>
   );
 }

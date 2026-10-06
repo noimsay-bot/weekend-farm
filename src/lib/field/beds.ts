@@ -123,6 +123,3 @@ export function plantPositions(b: Bed, p: BedPlanting, count: number): { x: numb
   }
   return out;
 }
-
-// 끌기·크기 조절은 10cm 단위로 맞춘다.
-export const snap = (v: number, step = 10) => Math.round(v / step) * step;
