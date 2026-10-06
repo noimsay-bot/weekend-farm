@@ -37,7 +37,9 @@ export function recommendSize(s: PlantSetup, plantSpacingCm: number | null, rowS
   } else {
     const spacing = plantSpacingCm ?? across1;
     const rows = Math.max(1, Math.min(s.rows, s.count));
-    along = up10(Math.ceil(s.count / rows) * spacing);
+    // 엇갈려 심기는 줄마다 포기 간격 두 배 (beds.ts autoPlantCount와 같은 규칙)
+    const step = s.layout === "staggered" && rows > 1 ? spacing * 2 : spacing;
+    along = up10(Math.ceil(s.count / rows) * step);
     across = up10(rows * across1);
   }
   const kind: Size["kind"] = along < across ? "plot" : "bed";

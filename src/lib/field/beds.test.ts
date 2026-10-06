@@ -39,6 +39,9 @@ describe("bed geometry", () => {
     expect(autoPlantCount(plot, bp({}), 40)).toBe(4);
     expect(autoPlantCount(vertical, bp({}), null)).toBeNull();
     expect(autoPlantCount(vertical, bp({ rows: 2, method: "hill" }), 25)).toBe(24);
+    // 엇갈려 두 줄: 나란히 두 줄의 절반
+    expect(autoPlantCount(vertical, bp({ rows: 2, layout: "staggered" }), 25)).toBe(12);
+    expect(autoPlantCount(vertical, bp({ rows: 1, layout: "staggered" }), 25)).toBe(12);
     expect(autoPlantCount(vertical, bp({ method: "row" }), 25)).toBeNull();
     expect(autoPlantCount(vertical, bp({ method: "broadcast" }), 25)).toBeNull();
   });

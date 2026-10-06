@@ -362,8 +362,9 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {!floating && !setup && editable && (
-        <div className="flex flex-col gap-2">
+      {/* 상자를 끄는 동안 버튼이 사라지면 밭 그림이 손가락 아래에서 튀므로 자리는 남기고 숨긴다 */}
+      {!setup && editable && (
+        <div className={`flex flex-col gap-2 ${floating ? "invisible" : ""}`} aria-hidden={floating ? true : undefined}>
           <Button onClick={() => setPicker("first")} disabled={busy}>
             + 작물 심기
           </Button>
@@ -412,21 +413,35 @@ export function BedPlanEditor({ data }: { data: BedEditorData }) {
           mode="plant"
           floating={floating}
           onFloatingChange={setFloating}
+          onLongPressBed={
+            editable
+              ? (id) => {
+                  const b = beds.find((x) => x.id === id);
+                  if (!b) return;
+                  setBpId(null);
+                  setBedId(id);
+                  setFloating({ ...b });
+                }
+              : undefined
+          }
           onSelectBed={(id) => {
             if (floating) return;
             setBedId(id);
             setBpId(null);
             if (!id) return;
-            // 빈 구획을 누르면 바로 작물 고르기, 심은 게 있으면 첫 작물을 연다
+            // 심은 게 있으면 첫 작물을 연다. 빈 구획은 아래 패널의 '작물 심기'로 고른다 (길게 누르기와 겹치지 않게).
             const first = bps.find((p) => p.bed_id === id);
             if (first) setBpId(first.id);
-            else if (editable) setPicker("new");
           }}
           onSelectPlanting={(id) => !floating && setBpId(id)}
         />
         <p className="px-1 pt-2 text-xs text-muted">
           {data.widthM}×{data.heightM}m · 눈금 1m
-          {floating ? " · 끌어 옮기고 초록 손잡이로 크기를 맞춰요 (10cm 단위, 옆 구획에 착 붙어요)" : " · 구획을 눌러 작물을 바꾸거나 더 심어요"}
+          {floating
+            ? " · 끌어 옮기고 초록 손잡이로 크기를 맞춰요 (10cm 단위, 옆 구획에 착 붙어요)"
+            : editable
+              ? " · 구획을 누르면 작물, 길게 누르면 옮기기·크기 바꾸기"
+              : " · 구획을 눌러 작물을 봐요"}
           {busy && " · 저장 중…"}
         </p>
       </div>

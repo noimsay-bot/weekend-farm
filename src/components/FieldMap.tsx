@@ -3,7 +3,7 @@
 // 밭 그림: 흙(고랑) 위에 두둑·네모 밭을 놓고, 심은 작물은 포기 위치에 원으로 그린다.
 // 격자는 자 역할만 한다. 새로 놓거나 고치는 구획(floating)은 위에 떠 있는 상자로 그려
 // 끌어 옮기고 오른쪽 아래 손잡이로 크기를 바꾼다. 10cm 격자와 다른 구획·밭 가장자리에 자석처럼 붙는다.
-// 고정된 구획은 움직이지 않는다.
+// 고정된 구획은 길게 누르면(onLongPressBed) 떠 있는 상자가 되어 그대로 끌어 옮길 수 있다.
 import { useRef, useState } from "react";
 import { plantCountOf, plantPositions, scatterPoints, segmentRect, sowLines, type Bed, type BedPlanting } from "@/lib/field/beds";
 import { snapMove, snapResize, STEP_CM } from "@/lib/field/layout";
@@ -27,7 +27,12 @@ type Props = {
   onBedChange?: (bed: Bed) => void;
   floating?: Bed | null; // 아직 고정하지 않은 상자
   onFloatingChange?: (bed: Bed) => void;
+  onLongPressBed?: (bedId: string) => void; // 길게 눌러 옮기기·크기 바꾸기 (계획 확정 전)
 };
+
+// 길게 누르기 판정 시간과 허용 흔들림(cm 아닌 화면 px)
+const LONG_PRESS_MS = 450;
+const LONG_PRESS_SLOP_PX = 10;
 
 type Drag = { id: string; kind: "move" | "resize"; startX: number; startY: number; orig: Bed };
 
@@ -47,10 +52,42 @@ export function FieldMap({
   onBedChange,
   floating = null,
   onFloatingChange,
+  onLongPressBed,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [draft, setDraft] = useState<Bed | null>(null);
+  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
+
+  function cancelPress() {
+    if (press.current) clearTimeout(press.current.timer);
+    press.current = null;
+  }
+
+  // 구획을 누르고 있으면 잠시 뒤 떠 있는 상자로 바꾸고, 같은 손가락으로 바로 끌어 옮긴다.
+  function startPress(e: React.PointerEvent, bed: Bed) {
+    if (!onLongPressBed || floating) return;
+    cancelPress();
+    const target = e.currentTarget as Element;
+    const pointerId = e.pointerId;
+    const start = toCm(e);
+    try {
+      target.setPointerCapture(pointerId);
+    } catch {
+      // 합성 이벤트 등 캡처할 수 없는 경우는 그냥 둔다
+    }
+    press.current = {
+      x: e.clientX,
+      y: e.clientY,
+      timer: setTimeout(() => {
+        press.current = null;
+        navigator.vibrate?.(30);
+        onLongPressBed(bed.id);
+        setDrag({ id: bed.id, kind: "move", startX: start.x, startY: start.y, orig: bed });
+        setDraft(bed);
+      }, LONG_PRESS_MS),
+    };
+  }
   const unit = Math.max(widthCm, heightCm) / 60; // 글자·선 굵기 기준
 
   function toCm(e: React.PointerEvent): { x: number; y: number } {
@@ -74,6 +111,7 @@ export function FieldMap({
   }
 
   function onMove(e: React.PointerEvent) {
+    if (press.current && Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > LONG_PRESS_SLOP_PX) cancelPress();
     if (!drag) return;
     const p = toCm(e);
     const dx = p.x - drag.startX;
@@ -90,6 +128,7 @@ export function FieldMap({
   }
 
   function endDrag() {
+    cancelPress();
     if (drag && draft && !(floating && drag.id === floating.id) && (draft.x_cm !== drag.orig.x_cm || draft.y_cm !== drag.orig.y_cm || draft.w_cm !== drag.orig.w_cm || draft.h_cm !== drag.orig.h_cm)) {
       onBedChange?.(draft);
     }
@@ -113,6 +152,7 @@ export function FieldMap({
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onPointerDown={() => !floating && onSelectBed?.(null)}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <rect x={0} y={0} width={widthCm} height={heightCm} rx={unit * 0.8} fill="var(--soil)" />
       {/* 1m 눈금 */}
@@ -161,8 +201,11 @@ export function FieldMap({
               stroke={selected ? "var(--primary)" : "var(--bed-line)"}
               strokeWidth={selected ? unit * 0.35 : unit * 0.12}
               strokeDasharray={b.kind === "plot" ? `${unit * 0.6} ${unit * 0.4}` : undefined}
-              style={{ cursor: mode === "layout" ? "move" : "pointer" }}
-              onPointerDown={(e) => startDrag(e, b, "move")}
+              style={{ cursor: mode === "layout" ? "move" : "pointer", touchAction: onLongPressBed ? "none" : undefined }}
+              onPointerDown={(e) => {
+                startDrag(e, b, "move");
+                startPress(e, b);
+              }}
             />
           </g>
         );
@@ -186,9 +229,10 @@ export function FieldMap({
         return (
           <g
             key={p.id}
-            style={{ cursor: "pointer", pointerEvents: mode === "layout" ? "none" : "auto" }}
+            style={{ cursor: "pointer", pointerEvents: mode === "layout" ? "none" : "auto", touchAction: onLongPressBed ? "none" : undefined }}
             onPointerDown={(e) => {
               e.stopPropagation();
+              startPress(e, b);
               onSelectBed?.(b.id);
               onSelectPlanting?.(p.id);
             }}

@@ -55,7 +55,12 @@ export function segmentCells(r: Rect, cellCm: number): { x: number; y: number }[
 }
 
 // 포기 수 자동 계산: 두둑은 줄 수 × (구간 길이 / 포기 간격), 네모 밭은 가로·세로로 포기 간격만큼.
-export function autoPlantCount(b: Bed, p: Pick<BedPlanting, "rows" | "start_cm" | "length_cm"> & { method?: SowPattern }, spacingCm: number | null): number | null {
+// 엇갈려 심기(여러 줄)는 줄마다 포기 간격을 두 배로 띄워 지그재그로 심는다 — 나란히 두 줄에 4포기 들어갈 자리에 2포기.
+export function autoPlantCount(
+  b: Bed,
+  p: Pick<BedPlanting, "rows" | "start_cm" | "length_cm"> & { method?: SowPattern; layout?: RowLayout },
+  spacingCm: number | null,
+): number | null {
   if (p.method && !countsPlants(p.method)) return null;
   if (!spacingCm || spacingCm <= 0) return null;
   const r = segmentRect(b, p);
@@ -63,7 +68,8 @@ export function autoPlantCount(b: Bed, p: Pick<BedPlanting, "rows" | "start_cm" 
   const h = r.y1 - r.y0;
   if (b.kind === "plot") return Math.max(1, Math.floor(w / spacingCm)) * Math.max(1, Math.floor(h / spacingCm));
   const along = isVertical(b) ? h : w;
-  return p.rows * Math.max(1, Math.floor(along / spacingCm));
+  const step = p.layout === "staggered" && p.rows > 1 ? spacingCm * 2 : spacingCm;
+  return p.rows * Math.max(1, Math.floor(along / step));
 }
 
 export const plantCountOf = (b: Bed, p: BedPlanting, spacingCm: number | null) =>

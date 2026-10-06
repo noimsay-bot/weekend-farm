@@ -20,6 +20,10 @@ describe("recommendSize", () => {
     expect(recommendSize(setup({ rows: 2 }), 40, 60)).toEqual({ kind: "bed", w_cm: 160, h_cm: 120 });
   });
 
+  it("엇갈려 두 줄은 같은 자리에 절반만: 8포기면 한 줄과 같은 길이", () => {
+    expect(recommendSize(setup({ rows: 2, layout: "staggered" }), 40, 60)).toEqual({ kind: "bed", w_cm: 320, h_cm: 120 });
+  });
+
   it("세로로 놓으면 가로·세로가 바뀐다", () => {
     expect(recommendSize(setup({ orientation: "vertical" }), 40, 60)).toEqual({ kind: "bed", w_cm: 60, h_cm: 320 });
   });

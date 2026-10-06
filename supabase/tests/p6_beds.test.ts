@@ -59,6 +59,9 @@ describe("field beds", () => {
     const sown = await db.query<{ n: number | null }>("select bed_planting_auto_count($1) as n", [bpId]);
     expect(sown.rows[0].n).toBeNull();
     await asUser(db, U, "update plan_bed_plantings set method = 'hill' where id = $1", [bpId]);
+    // 엇갈려 두 줄(300cm, 포기 간격 25cm): 줄마다 50cm 간격 → 2 × 6 = 12 (나란히면 24)
+    const staggered = await db.query<{ n: number }>("select bed_planting_auto_count($1) as n", [bpId]);
+    expect(staggered.rows[0].n).toBe(12);
     const cells = await asUser<{ x: number; y: number; name: string }>(
       db,
       U,
@@ -86,7 +89,7 @@ describe("field beds", () => {
       [plan],
     );
     expect(rows).toEqual([
-      { name: "무", planned_plant_count: 24, cells: 12, linked: true },
+      { name: "무", planned_plant_count: 12, cells: 12, linked: true }, // 엇갈려 두 줄이라 나란히(24)의 절반
       { name: "배추", planned_plant_count: 5, cells: 4, linked: true },
       { name: "양배추", planned_plant_count: 3, cells: 2, linked: true },
     ]);
